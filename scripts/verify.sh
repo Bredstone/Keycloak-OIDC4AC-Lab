@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-ISSUER=http://keycloak.localhost:8080/realms/oidc4ac
+ISSUER="${OIDC4AC_LAB_ISSUER:-http://keycloak.localhost:8080/realms/oidc4ac}"
 DISCOVERY=$(curl --fail --silent --show-error "$ISSUER/.well-known/openid-configuration")
 
 jq --exit-status '
@@ -32,5 +32,5 @@ jq --exit-status '
   (has("pwd_derivation_algorithm_values_supported") | not)
 ' <<<"$DISCOVERY" >/dev/null
 
-curl --fail --silent --show-error http://client.localhost:5000/healthz | jq --exit-status '.status == "ok"' >/dev/null
+curl --fail --silent --show-error "${OIDC4AC_LAB_CLIENT_URL:-http://client.localhost:5000}/healthz" | jq --exit-status '.status == "ok"' >/dev/null
 echo "OIDC4AC discovery and test-client readiness checks passed."

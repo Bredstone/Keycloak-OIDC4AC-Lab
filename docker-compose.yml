@@ -18,7 +18,7 @@ services:
   e2e:
     profiles: ["e2e"]
     build:
-      context: ./e2e
+      context: ./e2e/http
       dockerfile: Dockerfile
     environment:
       OIDC4AC_E2E_CLIENT_URL: http://client.localhost:${OIDC4AC_LAB_CLIENT_PORT:-5000}
@@ -32,7 +32,7 @@ services:
   browser-e2e:
     profiles: ["browser-e2e"]
     build:
-      context: ./browser-e2e
+      context: ./e2e/browser
       dockerfile: Dockerfile
     environment:
       OIDC4AC_BROWSER_CLIENT_URL: http://localhost:5003
@@ -63,8 +63,8 @@ services:
   keycloak:
     profiles: ["browser-e2e"]
     build:
-      context: ../..
-      dockerfile: dev/oidc4ac-lab/keycloak.Dockerfile
+      context: .
+      dockerfile: keycloak/Dockerfile
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${OIDC4AC_LAB_ADMIN_USERNAME:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${OIDC4AC_LAB_ADMIN_PASSWORD:-admin}
@@ -82,8 +82,8 @@ services:
   keycloak-disabled:
     profiles: ["disabled-e2e"]
     build:
-      context: ../..
-      dockerfile: dev/oidc4ac-lab/keycloak.Dockerfile
+      context: .
+      dockerfile: keycloak/Dockerfile
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${OIDC4AC_LAB_ADMIN_USERNAME:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${OIDC4AC_LAB_ADMIN_PASSWORD:-admin}

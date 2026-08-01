@@ -7,8 +7,10 @@ implementation feasible. The published draft at
 `fc7c2c5d5155530cd4b71ee44f37cf11e2a578c2` was not independently implementable
 without those decisions. As of 2026-08-01, the covered protocol paths have
 passed 55 focused unit tests, 36 real authorization-code HTTP scenarios, nine
-browser/WebAuthn scenarios, and six focused Arquillian authorization/provider
-integration tests. This is an evidence-backed validation report, not
+browser/WebAuthn scenarios, and five focused Arquillian authorization
+integration tests. The separate provider fixture and its integration source
+are preserved under `providers/` and `tests/integration/`. This is an
+evidence-backed validation report, not
 a claim that arbitrary Keycloak deployments or all hardware authenticators are
 bug-free.
 
@@ -62,28 +64,27 @@ The Admin Console integration test opens the Realm settings → OIDC4AC
 policy editor and verifies its flow-integration, dynamic capability, and
 realm/client disclosure controls.
 
-The following commands passed on 2026-08-01 (the unit, browser, and focused
-Arquillian results were rerun against the same rebuilt distribution before this
-report was updated):
+The following commands passed on 2026-08-01 (the Keycloak Maven commands run
+from the implementation checkout named by `OIDC4AC_LAB_KEYCLOAK_REPO`; the
+other commands run from this lab repository):
 
 ```bash
-./mvnw -pl services -am -Dskip.pnpm=true \
+(cd "$OIDC4AC_LAB_KEYCLOAK_REPO" && ./mvnw -pl services -am -Dskip.pnpm=true \
   -Dtest='org.keycloak.authentication.authenticators.oidc4ac.OIDC4ACFactorPlannerAuthenticatorTest,org.keycloak.protocol.oidc4ac.AmrDetailsRequestParserTest,org.keycloak.protocol.oidc4ac.OIDC4ACReauthenticationTest,org.keycloak.protocol.oidc4ac.delivery.AmrDetailsProjectionTest,org.keycloak.protocol.oidc4ac.discovery.OIDC4ACDiscoveryMetadataTest,org.keycloak.protocol.oidc4ac.discovery.CustomAuthenticationMethodDetailsProviderTest,org.keycloak.protocol.oidc4ac.disclosure.OIDC4ACDisclosurePolicyTest,org.keycloak.protocol.oidc4ac.error.OIDC4ACAuthenticationFailureBridgeTest,org.keycloak.protocol.oidc4ac.event.AuthenticationEventSnapshotCodecTest,org.keycloak.protocol.oidc4ac.event.AuthenticationEventSnapshotStoreTest,org.keycloak.protocol.oidc4ac.flow.AuthenticationFactorFallbackPolicyTest,org.keycloak.protocol.oidc4ac.flow.AuthenticationFactorPlanPlannerTest,org.keycloak.protocol.oidc4ac.flow.AuthenticationFactorPlanStoreTest,org.keycloak.protocol.oidc4ac.providers.NativeAuthenticationMethodDetailsProviderTest' \
-  -Dsurefire.failIfNoSpecifiedTests=false test
+  -Dsurefire.failIfNoSpecifiedTests=false test)
 
 OIDC4AC_E2E_CLIENT_URL=http://localhost:5003 \
 OIDC4AC_E2E_ISSUER=http://localhost:8186/realms/oidc4ac \
-  python3 dev/oidc4ac-lab/e2e/run.py
+  python3 e2e/http/run.py
 
-docker compose --profile browser-e2e \
-  -f dev/oidc4ac-lab/docker-compose.yml run --build --rm browser-e2e
+docker compose --profile browser-e2e run --build --rm browser-e2e
 
-python3 dev/oidc4ac-lab/feature-disabled.py
+python3 tests/feature-disabled.py
 
-./mvnw -f testsuite/integration-arquillian/tests/pom.xml \
+(cd "$OIDC4AC_LAB_KEYCLOAK_REPO" && ./mvnw -f testsuite/integration-arquillian/tests/pom.xml \
   -Pauth-server-quarkus -pl base -am \
   -Dtest=OIDC4ACAuthenticationContextTest,OIDC4ACCustomProviderIntegrationTest \
-  -Dcheckstyle.skip -Dspotless.check.skip=true test
+  -Dcheckstyle.skip -Dspotless.check.skip=true test)
 ```
 
 ## Keycloak core changes required
@@ -127,4 +128,5 @@ It compiles with the Arquillian suite (667 test sources), but the local
 cluster profile could not start its two Quarkus backend adapters: the
 load-balancer returned HTTP 503 before the test method ran. This is therefore
 an infrastructure-validation gap, not a passing claim for multi-node
-failover. The lab remains temporary and is ignored by the repository worktree.
+failover. The lab is standalone; only generated `.runtime/` and `.build/` state
+is ignored by Git.

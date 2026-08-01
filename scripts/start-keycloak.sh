@@ -17,9 +17,11 @@
 
 set -euo pipefail
 
-LAB_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-REPOSITORY_DIR=$(CDPATH= cd -- "$LAB_DIR/../.." && pwd)
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+LAB_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+REPOSITORY_DIR=$(CDPATH= cd -- "${OIDC4AC_LAB_KEYCLOAK_REPO:-$LAB_DIR/../keycloak-OIDC4AC}" && pwd)
 RUNTIME_DIR="$LAB_DIR/.runtime"
+BUILD_DIR="$LAB_DIR/.build"
 ARCHIVE="$REPOSITORY_DIR/quarkus/dist/target/keycloak-26.7.0.tar.gz"
 HTTP_PORT="${OIDC4AC_LAB_HTTP_PORT:-8080}"
 
@@ -33,10 +35,13 @@ if [[ ! -f "$ARCHIVE" ]]; then
     exit 1
 fi
 
+mkdir -p "$BUILD_DIR"
+cp "$ARCHIVE" "$BUILD_DIR/keycloak-26.7.0.tar.gz"
+
 KEYCLOAK_HOME=$(mktemp -d "$RUNTIME_DIR/keycloak.XXXXXX")
 tar -xzf "$ARCHIVE" -C "$KEYCLOAK_HOME" --strip-components=1
 mkdir -p "$KEYCLOAK_HOME/data/import"
-cp "$LAB_DIR/realm-import.json" "$KEYCLOAK_HOME/data/import/oidc4ac-realm.json"
+cp "$LAB_DIR/config/realm-import.json" "$KEYCLOAK_HOME/data/import/oidc4ac-realm.json"
 
 export KC_BOOTSTRAP_ADMIN_USERNAME="${OIDC4AC_LAB_ADMIN_USERNAME:-admin}"
 export KC_BOOTSTRAP_ADMIN_PASSWORD="${OIDC4AC_LAB_ADMIN_PASSWORD:-admin}"

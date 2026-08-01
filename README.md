@@ -1,18 +1,22 @@
 # OIDC4AC Native Feature Lab
 
-This disposable development lab replaces the previous PoC extension with the
-native implementation in this checkout. It deliberately reuses the PoC's
-familiar realm, `alice` user, `oidc4ac-test-client`, and browser-facing Flask
-client, but it does not load the PoC provider JAR or its custom authenticators.
+This standalone lab exercises the native OIDC4AC implementation in a separate
+Keycloak checkout. It deliberately reuses the PoC's familiar realm, `alice`
+user, `oidc4ac-test-client`, and browser-facing Flask client, but it does not
+load the old PoC provider JAR or custom authenticators.
 
-Only generated runtime state is ignored: `.runtime/` contains extracted server
-distributions and `.env` can hold local overrides. The lab source remains
-visible so it can be reviewed or promoted deliberately.
+The repository is organized by responsibility: `config/` contains realm
+fixtures, `test-client/` is the relying party, `e2e/` contains black-box HTTP
+and browser runners, `providers/` contains optional provider examples,
+`scripts/` contains lifecycle checks, and `docs/` contains protocol and
+coverage notes. `.runtime/` and `.build/` are generated local state. The
+optional email provider fixture is preserved under
+`providers/oidc4ac-test-email/`; it is not loaded by the default realm.
 
 ## Prerequisites
 
 - Docker with Docker Compose v2, for the test client;
-- Java 21 and Maven prerequisites needed to build this Keycloak checkout; and
+- Java 21 and Maven prerequisites needed to build the Keycloak checkout; and
 - `curl` and `jq`, for the smoke check.
 
 `*.localhost` resolves to the loopback address in modern browsers. The Compose
@@ -21,11 +25,19 @@ and browser URLs all use the same host name.
 
 ## Start the lab
 
-In one terminal, build the current checkout, extract a new disposable server,
-import the realm, and start it with the native feature enabled:
+Set `OIDC4AC_LAB_KEYCLOAK_REPO` to the Keycloak source checkout that contains
+the OIDC4AC implementation. When the repositories are sibling directories,
+the default is already correct:
 
 ```bash
-bash dev/oidc4ac-lab/start-keycloak.sh
+export OIDC4AC_LAB_KEYCLOAK_REPO=../keycloak-OIDC4AC
+```
+
+In one terminal, build that checkout, extract a new disposable server, import
+the realm, and start it with the native feature enabled:
+
+```bash
+bash scripts/start-keycloak.sh
 ```
 
 After a successful build, set `OIDC4AC_LAB_SKIP_BUILD=true` to reuse the
@@ -41,19 +53,19 @@ starting if required:
 
 ```bash
 export OIDC4AC_LAB_ADMIN_PASSWORD='a-local-development-password'
-bash dev/oidc4ac-lab/start-keycloak.sh
+bash scripts/start-keycloak.sh
 ```
 
 In another terminal, start the relying party:
 
 ```bash
-docker compose -f dev/oidc4ac-lab/docker-compose.yml up --build
+docker compose up --build
 ```
 
 Run the automated HTTP end-to-end suite after both services are ready:
 
 ```bash
-docker compose -f dev/oidc4ac-lab/docker-compose.yml --profile e2e run --build --rm e2e
+docker compose --profile e2e run --build --rm e2e
 ```
 
 The HTTP runner defaults to the regular lab (`keycloak.localhost:8080` and
@@ -62,7 +74,7 @@ The HTTP runner defaults to the regular lab (`keycloak.localhost:8080` and
 ```bash
 OIDC4AC_E2E_CLIENT_URL=http://localhost:5000 \
 OIDC4AC_E2E_ISSUER=http://localhost:8080/realms/oidc4ac \
-python3 dev/oidc4ac-lab/e2e/run.py
+python3 e2e/http/run.py
 ```
 
 The WebAuthn browser suite is a separate profile. It starts its own disposable
@@ -71,12 +83,12 @@ virtual CTAP2 authenticator to register a passkey through the Account Console
 and authorize real pop-backed requests:
 
 ```bash
-docker compose -f dev/oidc4ac-lab/docker-compose.yml --profile browser-e2e run --build --rm browser-e2e
+docker compose --profile browser-e2e run --build --rm browser-e2e
 ```
 
-The browser profile copies the current `quarkus/dist` archive into its
-temporary Keycloak image, so build the checkout first (the normal
-`start-keycloak.sh` command does this). It is isolated from the regular
+The browser profile copies the prepared `.build/keycloak-26.7.0.tar.gz` archive
+into its temporary Keycloak image, so build the checkout first (the normal
+`scripts/start-keycloak.sh` command prepares this archive). It is isolated from the regular
 localhost:5000 client and native server process.
 
 The suite submits requests through this Flask test client, follows the actual
@@ -183,7 +195,7 @@ credential model cannot provide a complete truthful `amr_properties` object.
 Once both services are up, run:
 
 ```bash
-bash dev/oidc4ac-lab/verify.sh
+bash scripts/verify.sh
 ```
 
 It verifies discovery advertises `amr_details`, the native `pwd`, `otp`, and
@@ -228,6 +240,6 @@ available for explicit `pop` requests.
 ## Dispose of runtime state
 
 Stop the two foreground processes with `Ctrl-C`. The generated distributions
-remain under `dev/oidc4ac-lab/.runtime/` and are ignored by Git; remove only a
+remain under `.runtime/` and are ignored by Git; remove only a
 specific generated directory when you no longer need it. Docker's test-client
 image can be removed with the normal Docker commands if desired.
