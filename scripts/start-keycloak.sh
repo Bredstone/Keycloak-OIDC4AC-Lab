@@ -19,7 +19,9 @@ set -euo pipefail
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 LAB_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
-REPOSITORY_DIR=$(CDPATH= cd -- "${OIDC4AC_LAB_KEYCLOAK_REPO:-$LAB_DIR/../keycloak-OIDC4AC}" && pwd)
+source "$LAB_DIR/scripts/keycloak-repo.sh"
+resolve_keycloak_repo "$LAB_DIR" || exit 1
+REPOSITORY_DIR="$KEYCLOAK_REPO"
 RUNTIME_DIR="$LAB_DIR/.runtime"
 BUILD_DIR="$LAB_DIR/.build"
 ARCHIVE="$REPOSITORY_DIR/quarkus/dist/target/keycloak-26.7.0.tar.gz"

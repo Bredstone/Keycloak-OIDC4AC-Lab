@@ -17,7 +17,10 @@ optional email provider fixture is preserved under
 
 - Docker with Docker Compose v2, for the test client;
 - Java 21 and Maven prerequisites needed to build the Keycloak checkout; and
-- `curl`, `jq`, and the development dependencies in `requirements-dev.txt`.
+- `curl`, `jq`, Git, and the development dependencies in `requirements-dev.txt`.
+
+Network access is needed only when the local Keycloak checkout is not already
+available and the wrapper needs to clone the configured fork.
 
 `*.localhost` resolves to the loopback address in modern browsers. The Compose
 client maps `keycloak.localhost` to Docker's host gateway so its issuer, token,
@@ -50,10 +53,20 @@ The same wrapper exposes the common lifecycle, verification, and test commands:
 ```
 
 The Keycloak checkout defaults to the sibling directory
-`../keycloak-OIDC4AC` (relative to the lab root). Set
-`OIDC4AC_LAB_KEYCLOAK_REPO` to override it. Set
-`OIDC4AC_LAB_SKIP_BUILD=true` after the first successful build to reuse the
-prepared distribution archive.
+`../keycloak-OIDC4AC` (relative to the lab root). If that checkout is absent,
+the wrapper shallow-clones the fork's `oidc4ac-implementation` branch into
+the ignored `.runtime/keycloak-source` directory. Override the source path or
+download location when needed:
+
+```bash
+export OIDC4AC_LAB_KEYCLOAK_REPO=/path/to/keycloak-OIDC4AC
+# Or, when the source should be downloaded:
+export OIDC4AC_LAB_KEYCLOAK_REPO_URL=https://github.com/Bredstone/keycloak-OIDC4AC.git
+export OIDC4AC_LAB_KEYCLOAK_REF=oidc4ac-implementation
+```
+
+Set `OIDC4AC_LAB_SKIP_BUILD=true` after the first successful build to reuse
+the prepared distribution archive.
 
 Install the development lint dependency once with:
 
@@ -205,6 +218,11 @@ needed with:
 ```bash
 ./dev.sh provider-build
 ```
+
+The first provider build installs the fork's parent and server SPI artifacts
+into the local Maven cache, which also allows the command to work when the
+fork was downloaded into `.runtime/keycloak-source` rather than kept as a
+sibling checkout.
 
 The JAR is written to `providers/oidc4ac-test-email/target/`, which is ignored
 by Git. The default realm does not install or configure this fixture. It is

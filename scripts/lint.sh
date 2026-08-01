@@ -3,10 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-KEYCLOAK_REPO=${OIDC4AC_LAB_KEYCLOAK_REPO:-$ROOT_DIR/../keycloak-OIDC4AC}
-if [[ "$KEYCLOAK_REPO" != /* ]]; then
-    KEYCLOAK_REPO="$ROOT_DIR/$KEYCLOAK_REPO"
-fi
+source "$ROOT_DIR/scripts/keycloak-repo.sh"
 PROVIDER_DIR="$ROOT_DIR/providers/oidc4ac-test-email"
 
 die() {
@@ -39,9 +36,7 @@ json.loads((root / "config/realm-import.json").read_text(encoding="utf-8"))
 ET.parse(root / "providers/oidc4ac-test-email/pom.xml")
 PY
 
-if [[ ! -x "$KEYCLOAK_REPO/mvnw" ]]; then
-    die "Keycloak checkout not found or mvnw is not executable: $KEYCLOAK_REPO"
-fi
+resolve_keycloak_repo "$ROOT_DIR" || die "unable to prepare the Keycloak implementation checkout"
 
 "$KEYCLOAK_REPO/mvnw" -f "$PROVIDER_DIR/pom.xml" -DskipTests spotless:check
 

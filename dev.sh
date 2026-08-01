@@ -7,6 +7,7 @@ KEYCLOAK_REPO=${OIDC4AC_LAB_KEYCLOAK_REPO:-$ROOT_DIR/../keycloak-OIDC4AC}
 if [[ "$KEYCLOAK_REPO" != /* ]]; then
     KEYCLOAK_REPO="$ROOT_DIR/$KEYCLOAK_REPO"
 fi
+source "$ROOT_DIR/scripts/keycloak-repo.sh"
 RUNTIME_DIR="$ROOT_DIR/.runtime"
 BUILD_DIR="$ROOT_DIR/.build"
 PROVIDER_DIR="$ROOT_DIR/providers/oidc4ac-test-email"
@@ -27,6 +28,10 @@ die() {
 
 require_command() {
     command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
+}
+
+ensure_keycloak_repo() {
+    resolve_keycloak_repo "$ROOT_DIR" || die "unable to prepare the Keycloak implementation checkout"
 }
 
 pid_is_running() {
@@ -70,6 +75,7 @@ wait_for_url() {
 }
 
 build_keycloak() {
+    ensure_keycloak_repo
     [[ -x "$KEYCLOAK_REPO/mvnw" ]] || die "Keycloak checkout not found or mvnw is not executable: $KEYCLOAK_REPO"
     mkdir -p "$BUILD_DIR"
     if [[ "${OIDC4AC_LAB_SKIP_BUILD:-false}" != "true" ]]; then
@@ -87,7 +93,14 @@ build_keycloak() {
 }
 
 build_provider() {
+    ensure_keycloak_repo
     [[ -x "$KEYCLOAK_REPO/mvnw" ]] || die "Keycloak checkout not found or mvnw is not executable: $KEYCLOAK_REPO"
+    echo "Preparing the Keycloak SPI artifacts for the provider..."
+    (
+        cd "$KEYCLOAK_REPO"
+        ./mvnw -N -DskipTests install
+        ./mvnw -pl server-spi-private -am -DskipTests -Dskip.pnpm=true install
+    )
     echo "Building the optional email provider..."
     (
         cd "$ROOT_DIR"
@@ -97,6 +110,7 @@ build_provider() {
 }
 
 start_host_keycloak() {
+    ensure_keycloak_repo
     require_command curl
     mkdir -p "$RUNTIME_DIR"
     if pid_is_running; then
@@ -185,8 +199,12 @@ lint() {
 }
 
 status() {
+    local source="$KEYCLOAK_REPO"
+    if [[ ! -x "$source/mvnw" && -x "$RUNTIME_DIR/keycloak-source/mvnw" ]]; then
+        source="$RUNTIME_DIR/keycloak-source"
+    fi
     echo "Lab root:       $ROOT_DIR"
-    echo "Keycloak source: $KEYCLOAK_REPO"
+    echo "Keycloak source: $source"
     if pid_is_running; then
         echo "Keycloak host:   running (PID $(<"$KEYCLOAK_PID_FILE"))"
     else
@@ -244,8 +262,10 @@ Other:
   compose ...       Pass arguments through to Docker Compose
   help              Show this help
 
-Set OIDC4AC_LAB_KEYCLOAK_REPO when the Keycloak checkout is not the default
-sibling directory ../keycloak-OIDC4AC.
+The wrapper uses ../keycloak-OIDC4AC when present. Otherwise it shallow-clones
+the fork into ignored .runtime/keycloak-source. Override the source checkout
+with OIDC4AC_LAB_KEYCLOAK_REPO, or override the download with
+OIDC4AC_LAB_KEYCLOAK_REPO_URL and OIDC4AC_LAB_KEYCLOAK_REF.
 EOF
 }
 
