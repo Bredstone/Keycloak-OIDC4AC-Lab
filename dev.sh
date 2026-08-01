@@ -3,10 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-KEYCLOAK_REPO=${OIDC4AC_LAB_KEYCLOAK_REPO:-$ROOT_DIR/../keycloak-OIDC4AC}
-if [[ "$KEYCLOAK_REPO" != /* ]]; then
-    KEYCLOAK_REPO="$ROOT_DIR/$KEYCLOAK_REPO"
-fi
+KEYCLOAK_REPO="$ROOT_DIR/.runtime/keycloak-source"
 source "$ROOT_DIR/scripts/keycloak-repo.sh"
 RUNTIME_DIR="$ROOT_DIR/.runtime"
 BUILD_DIR="$ROOT_DIR/.build"
@@ -200,9 +197,6 @@ lint() {
 
 status() {
     local source="$KEYCLOAK_REPO"
-    if [[ ! -x "$source/mvnw" && -x "$RUNTIME_DIR/keycloak-source/mvnw" ]]; then
-        source="$RUNTIME_DIR/keycloak-source"
-    fi
     echo "Lab root:       $ROOT_DIR"
     echo "Keycloak source: $source"
     if pid_is_running; then
@@ -262,10 +256,9 @@ Other:
   compose ...       Pass arguments through to Docker Compose
   help              Show this help
 
-The wrapper uses ../keycloak-OIDC4AC when present. Otherwise it shallow-clones
-the fork into ignored .runtime/keycloak-source. Override the source checkout
-with OIDC4AC_LAB_KEYCLOAK_REPO, or override the download with
-OIDC4AC_LAB_KEYCLOAK_REPO_URL and OIDC4AC_LAB_KEYCLOAK_REF.
+The wrapper shallow-clones the fork into ignored .runtime/keycloak-source.
+Override the source checkout with OIDC4AC_LAB_KEYCLOAK_REPO, or override the
+download with OIDC4AC_LAB_KEYCLOAK_REPO_URL and OIDC4AC_LAB_KEYCLOAK_REF.
 EOF
 }
 

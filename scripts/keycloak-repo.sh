@@ -6,7 +6,6 @@
 resolve_keycloak_repo() {
     local lab_dir=$1
     local configured=${OIDC4AC_LAB_KEYCLOAK_REPO:-}
-    local sibling="$lab_dir/../keycloak-OIDC4AC"
     local checkout
 
     if [[ -n "$configured" ]]; then
@@ -19,12 +18,6 @@ resolve_keycloak_repo() {
             return 1
         fi
         KEYCLOAK_REPO=$(CDPATH= cd -- "$checkout" && pwd)
-        export KEYCLOAK_REPO
-        return 0
-    fi
-
-    if [[ -x "$sibling/mvnw" ]]; then
-        KEYCLOAK_REPO=$(CDPATH= cd -- "$sibling" && pwd)
         export KEYCLOAK_REPO
         return 0
     fi

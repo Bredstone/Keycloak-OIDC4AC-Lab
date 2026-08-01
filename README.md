@@ -1,9 +1,9 @@
 # OIDC4AC Native Feature Lab
 
-This standalone lab exercises the native OIDC4AC implementation in a separate
-Keycloak checkout. It deliberately reuses the PoC's familiar realm, `alice`
-user, `oidc4ac-test-client`, and browser-facing Flask client, but it does not
-load the old PoC provider JAR or custom authenticators.
+This standalone lab exercises the native OIDC4AC implementation by fetching
+and building the project fork on demand. It deliberately reuses the PoC's
+familiar realm, `alice` user, `oidc4ac-test-client`, and browser-facing Flask
+client, but it does not load the old PoC provider JAR or custom authenticators.
 
 The repository is organized by responsibility: `config/` contains realm
 fixtures, `test-client/` is the relying party, `e2e/` contains black-box HTTP
@@ -19,8 +19,8 @@ optional email provider fixture is preserved under
 - Java 21 and Maven prerequisites needed to build the Keycloak checkout; and
 - `curl`, `jq`, Git, and the development dependencies in `requirements-dev.txt`.
 
-Network access is needed only when the local Keycloak checkout is not already
-available and the wrapper needs to clone the configured fork.
+Network access is needed on the first run so the wrapper can clone the
+configured Keycloak fork.
 
 `*.localhost` resolves to the loopback address in modern browsers. The Compose
 client maps `keycloak.localhost` to Docker's host gateway so its issuer, token,
@@ -28,9 +28,9 @@ and browser URLs all use the same host name.
 
 ## One-command workflow
 
-From the lab root, `dev.sh` builds the local Keycloak checkout when needed,
-starts Keycloak and the test client, and keeps generated state under the
-ignored `.runtime/` and `.build/` directories:
+From the lab root, `dev.sh` downloads and builds the configured Keycloak fork
+when needed, starts Keycloak and the test client, and keeps generated state
+under the ignored `.runtime/` and `.build/` directories:
 
 ```bash
 ./dev.sh
@@ -52,11 +52,9 @@ The same wrapper exposes the common lifecycle, verification, and test commands:
 ./dev.sh clean          # stop services and remove generated state
 ```
 
-The Keycloak checkout defaults to the sibling directory
-`../keycloak-OIDC4AC` (relative to the lab root). If that checkout is absent,
-the wrapper shallow-clones the fork's `oidc4ac-implementation` branch into
+The wrapper shallow-clones the fork's `oidc4ac-implementation` branch into
 the ignored `.runtime/keycloak-source` directory. Override the source path or
-download location when needed:
+download location only when developing against a different implementation:
 
 ```bash
 export OIDC4AC_LAB_KEYCLOAK_REPO=/path/to/keycloak-OIDC4AC
@@ -76,16 +74,8 @@ python3 -m pip install -r requirements-dev.txt
 
 ## Manual lifecycle
 
-Set `OIDC4AC_LAB_KEYCLOAK_REPO` to the Keycloak source checkout that contains
-the OIDC4AC implementation. When the repositories are sibling directories,
-the default is already correct:
-
-```bash
-export OIDC4AC_LAB_KEYCLOAK_REPO=../keycloak-OIDC4AC
-```
-
-In one terminal, build that checkout, extract a new disposable server, import
-the realm, and start it with the native feature enabled:
+In one terminal, download the fork, build its distribution, import the realm,
+and start it with the native feature enabled:
 
 ```bash
 bash scripts/start-keycloak.sh
@@ -210,10 +200,9 @@ collecting a username. Username collection is not recorded as an AMR method.
 ## Optional email provider
 
 The disposable email authenticator is a normal Maven project so IDEs can
-resolve the Keycloak APIs and service descriptors. It uses the adjacent
-Keycloak checkout as its Maven parent and keeps Keycloak dependencies in
-`provided` scope; no Keycloak classes are bundled in its JAR. Build it when
-needed with:
+resolve the Keycloak APIs and service descriptors. It resolves the downloaded
+fork's Maven parent and keeps Keycloak dependencies in `provided` scope; no
+Keycloak classes are bundled in its JAR. Build it when needed with:
 
 ```bash
 ./dev.sh provider-build
@@ -221,8 +210,7 @@ needed with:
 
 The first provider build installs the fork's parent and server SPI artifacts
 into the local Maven cache, which also allows the command to work when the
-fork was downloaded into `.runtime/keycloak-source` rather than kept as a
-sibling checkout.
+fork was downloaded into `.runtime/keycloak-source`.
 
 The JAR is written to `providers/oidc4ac-test-email/target/`, which is ignored
 by Git. The default realm does not install or configure this fixture. It is

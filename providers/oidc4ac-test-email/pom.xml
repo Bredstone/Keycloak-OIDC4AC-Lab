@@ -11,16 +11,15 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!--
-        The lab is intentionally a separate repository, but this module uses
-        the adjacent Keycloak checkout as its parent. That gives IDEs the same
-        dependency management, Java level, and Spotless configuration as the
-        server it extends without copying a compiled Keycloak artifact here.
+        The parent is resolved from the local Maven cache. dev.sh installs the
+        fork's parent and SPI artifacts before compiling this optional module,
+        so the lab does not depend on a filesystem-relative Keycloak checkout.
     -->
     <parent>
         <groupId>org.keycloak</groupId>
         <artifactId>keycloak-parent</artifactId>
         <version>26.7.0</version>
-        <relativePath>../../keycloak-OIDC4AC/pom.xml</relativePath>
+        <relativePath/>
     </parent>
 
     <groupId>org.keycloak.oidc4ac.lab</groupId>
