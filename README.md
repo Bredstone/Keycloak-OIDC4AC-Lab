@@ -23,7 +23,37 @@ optional email provider fixture is preserved under
 client maps `keycloak.localhost` to Docker's host gateway so its issuer, token,
 and browser URLs all use the same host name.
 
-## Start the lab
+## One-command workflow
+
+From the lab root, `dev.sh` builds the local Keycloak checkout when needed,
+starts Keycloak and the test client, and keeps generated state under the
+ignored `.runtime/` and `.build/` directories:
+
+```bash
+./dev.sh
+```
+
+The same wrapper exposes the common lifecycle, verification, and test commands:
+
+```bash
+./dev.sh status         # show service and process status
+./dev.sh logs           # show recent logs
+./dev.sh verify         # run discovery/readiness checks
+./dev.sh test-http      # run HTTP end-to-end scenarios
+./dev.sh test-browser   # run virtual-CTAP2 browser scenarios
+./dev.sh test-disabled  # verify the realm feature gate
+./dev.sh test           # run all lab suites
+./dev.sh down           # stop services
+./dev.sh clean          # stop services and remove generated state
+```
+
+The Keycloak checkout defaults to the sibling directory
+`../keycloak-OIDC4AC` (relative to the lab root). Set
+`OIDC4AC_LAB_KEYCLOAK_REPO` to override it. Set
+`OIDC4AC_LAB_SKIP_BUILD=true` after the first successful build to reuse the
+prepared distribution archive.
+
+## Manual lifecycle
 
 Set `OIDC4AC_LAB_KEYCLOAK_REPO` to the Keycloak source checkout that contains
 the OIDC4AC implementation. When the repositories are sibling directories,
@@ -239,7 +269,13 @@ available for explicit `pop` requests.
 
 ## Dispose of runtime state
 
-Stop the two foreground processes with `Ctrl-C`. The generated distributions
-remain under `.runtime/` and are ignored by Git; remove only a
-specific generated directory when you no longer need it. Docker's test-client
-image can be removed with the normal Docker commands if desired.
+When the lab was started with the wrapper, stop it with:
+
+```bash
+./dev.sh down
+```
+
+The generated runtime and distribution state remains under `.runtime/` and
+`.build/`, both ignored by Git. Remove that disposable state with
+`./dev.sh clean` when it is no longer needed. Docker's test-client image can
+be removed with the normal Docker commands if desired.
