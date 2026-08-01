@@ -34,7 +34,6 @@
         <option value="otp-or-email">OTP or email (one_of)</option>
         <option value="nested-password-otp-or-email">Nested: password AND (OTP OR email)</option>
         <option value="email-property">Email code with required property</option>
-        <option value="email-assurance">Email metadata and property constraints</option>
         <option value="password-property">Password property requested</option>
         <option value="essential-password-property">Essential password property</option>
         <option value="unsupported">Unsupported method (expected generic failure)</option>
@@ -401,7 +400,6 @@
     'otp-or-email': { essential: true, operator: 'one_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'otp', timeRequested: true, timeEssential: true }, { identifier: 'email', timeRequested: true, timeEssential: true }] },
     'nested-password-otp-or-email': { essential: true, operator: 'all_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { operator: 'one_of', children: [{ identifier: 'otp', timeRequested: true, timeEssential: true }, { identifier: 'email', timeRequested: true, timeEssential: true }] }] },
     'email-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'email', timeRequested: true, timeEssential: true, properties: [{ name: 'email_verification_method', mode: 'value', value: 'code', essential: true }] }] },
-    'email-assurance': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'email', timeRequested: true, timeEssential: true, metadata: [{ name: 'trust_framework', mode: 'presence', essential: true }, { name: 'assurance_level', mode: 'presence', essential: true }], properties: [{ name: 'email_verification_method', mode: 'presence', essential: true }] }] },
     'password-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true, properties: [{ name: 'pwd_derivation_algorithm', mode: 'requested' }] }] },
     'essential-password-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true, properties: [{ name: 'pwd_derivation_algorithm', mode: 'presence', essential: true }] }] },
     unsupported: { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'face', timeRequested: false }] },

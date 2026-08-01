@@ -56,9 +56,11 @@ the real Keycloak flow and token pipeline. The planner accepts both imported
 
 The focused Arquillian suite also decrypts an RSA-OAEP/A256GCM encrypted JARM
 error and verifies the generic `unmet_authentication_requirements` payload.
-The standalone Maven email provider emits evidence-bearing `trust_framework` and
-`assurance_level` metadata, proving that custom providers can contribute
-open-valued metadata through discovery, planning, and token projection.
+The standalone Maven email provider contributes the finite
+`email_verification_method` property. The lab does not advertise or emit
+`channel`, `trust_framework`, or `assurance_level`; a separately deployed
+provider must establish the applicable evidence and policy before advertising
+additional metadata.
 
 The Admin Console integration test opens the Realm settings → OIDC4AC
 policy editor and verifies its flow-integration, dynamic capability, and

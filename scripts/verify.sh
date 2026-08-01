@@ -24,7 +24,7 @@ jq --exit-status '
   .amr_details_request_supported == true and
   (.claims_supported | index("amr_details")) and
   (.amr_identifiers_supported | sort == ["email", "otp", "pop", "pwd"]) and
-  (.email_metadata_supported | sort == ["assurance_level", "channel", "trust_framework"]) and
+  (.email_metadata_supported | sort == []) and
   (.email_verification_method_values_supported == ["code"]) and
   (.otp_properties_supported | sort == ["otp_algorithm", "otp_delivery_method", "otp_format", "otp_length", "otp_time_to_live"]) and
   (.otp_algorithm_values_supported | sort == ["HOTP", "TOTP"]) and
@@ -39,5 +39,5 @@ curl --fail --silent --show-error "$CLIENT_URL/healthz" | jq --exit-status '.sta
 curl --fail --silent --show-error "$CLIENT_URL/otp-code" \
     | jq --exit-status '(.code | test("^[0-9]{6}$")) and (.remaining >= 1 and .remaining <= 30)' >/dev/null
 curl --fail --silent --show-error "$CLIENT_URL/discovery" \
-    | jq --exit-status '.methods.email.metadata.assurance_level and .methods.otp.metadata.location and .methods.pwd.properties.pwd_iterations' >/dev/null
+    | jq --exit-status '(.methods.email.metadata | length == 0) and .methods.otp.metadata.location and .methods.pwd.properties.pwd_iterations' >/dev/null
 echo "OIDC4AC discovery and test-client readiness checks passed."

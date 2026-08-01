@@ -53,7 +53,7 @@ public final class OIDC4ACEmailAuthenticationMethodDetailsProviderFactory
         @Override
         public List<AuthenticationMethodCapability> getCapabilities() {
             return List.of(new AuthenticationMethodCapability("email", Set.of("email_verification_method"),
-                    Set.of("channel", "trust_framework", "assurance_level"),
+                    Set.of(),
                     Map.of("email_verification_method", Set.of("code"))));
         }
 
@@ -64,10 +64,7 @@ public final class OIDC4ACEmailAuthenticationMethodDetailsProviderFactory
 
         @Override
         public Optional<AuthenticationMethodDetails> describeSuccessfulExecution(AuthenticationMethodDetailsContext context) {
-            return Optional.of(new AuthenticationMethodDetails("email", context.executionTime(), Map.of(
-                    "channel", "email",
-                    "trust_framework", "urn:example:oidc4ac:email",
-                    "assurance_level", "aal2"),
+            return Optional.of(new AuthenticationMethodDetails("email", context.executionTime(), Map.of(),
                     Optional.of(Map.of("email_verification_method", "code"))));
         }
 

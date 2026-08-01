@@ -315,9 +315,10 @@ and no value enumeration for the open derivation-algorithm domain.
   delivered to smtp4dev at `http://localhost:5080`, and submit it in Keycloak.
 - **Email combinations**: exercise password-and-email, password-or-email,
   OTP-or-email, and nested `password AND (OTP OR email)` expressions.
-- **Email assurance metadata**: use the preset that requests the email
-  method's `trust_framework`, `assurance_level`, and verification-method
-  property as essential values.
+- **Email properties**: use the email verification-method preset to request
+  the finite `email_verification_method` property. The lab does not advertise
+  `channel`, `trust_framework`, or `assurance_level`; those values require an
+  independently deployed provider with evidence and policy for issuing them.
 - **Nested methods**: builds `(pwd AND otp) OR pop` to exercise recursive
   expression handling in both the client and Keycloak request parser.
 - **Password properties**: request an available property or require it to be

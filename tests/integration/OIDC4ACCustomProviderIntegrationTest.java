@@ -103,7 +103,7 @@ public class OIDC4ACCustomProviderIntegrationTest extends AbstractOIDCScopeTest 
                     .asJson(OIDCConfigurationRepresentation.class);
             assertTrue(discovery.getClaimsSupported().contains("amr_details"));
             assertTrue(((List<?>) discovery.getOtherClaims().get("amr_identifiers_supported")).contains("email"));
-            assertEquals(List.of("assurance_level", "channel", "trust_framework"),
+            assertEquals(List.of(),
                     discovery.getOtherClaims().get("email_metadata_supported"));
             assertEquals(List.of("code"), discovery.getOtherClaims().get("email_verification_method_values_supported"));
         }
@@ -113,9 +113,7 @@ public class OIDC4ACCustomProviderIntegrationTest extends AbstractOIDCScopeTest 
         String claims = JsonSerialization.writeValueAsString(Map.of(
                 "id_token", Map.of("amr_details", Map.of("essential", true,
                         "amr_identifier", Map.of("value", "email"),
-                        "amr_metadata", Map.of("time", Map.of("essential", true),
-                                "trust_framework", Map.of("essential", true),
-                                "assurance_level", Map.of("essential", true)),
+                        "amr_metadata", Map.of("time", Map.of("essential", true)),
                         "amr_properties", Map.of("email_verification_method", Map.of("essential", true)))),
                 "userinfo", Map.of("amr_details", Map.of("essential", true,
                         "amr_identifier", Map.of("value", "email"),
@@ -138,8 +136,8 @@ public class OIDC4ACCustomProviderIntegrationTest extends AbstractOIDCScopeTest 
         assertTrue(details.stream().anyMatch(detail -> detail.toString().contains("email_verification_method=code")));
         assertTrue(details.stream().anyMatch(detail -> detail.toString().contains("amr_identifier=email")));
         assertTrue(details.stream().anyMatch(detail -> detail.toString().contains("amr_identifier=pwd")));
-        assertTrue(details.stream().anyMatch(detail -> detail.toString().contains("trust_framework=urn:example:oidc4ac:email")));
-        assertTrue(details.stream().anyMatch(detail -> detail.toString().contains("assurance_level=aal2")));
+        assertTrue(details.stream().noneMatch(detail -> detail.toString().contains("trust_framework")));
+        assertTrue(details.stream().noneMatch(detail -> detail.toString().contains("assurance_level")));
 
         UserInfo userInfo = oauth.doUserInfoRequest(response.getAccessToken()).getUserInfo();
         Object userInfoDetails = userInfo.getOtherClaims().get("amr_details");
