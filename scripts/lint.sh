@@ -48,11 +48,12 @@ docker run --rm \
     --env HOME=/tmp \
     --env MAVEN_CONFIG=/workspace/.runtime/maven-cache \
     --env MAVEN_OPTS=-Dmaven.repo.local=/workspace/.runtime/maven-cache/repository \
+    --env DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 \
     "$MAVEN_IMAGE" bash -lc '
         set -euo pipefail
         cd /keycloak-source
         ./mvnw -N -DskipTests install
-        ./mvnw -pl server-spi-private -am -DskipTests -Dskip.pnpm=true install
+        ./mvnw -pl server-spi-private -am -DskipTests install
         cd /workspace
         /keycloak-source/mvnw -f providers/oidc4ac-test-email/pom.xml -DskipTests spotless:check
     '
