@@ -34,6 +34,7 @@ PASSWORD = os.environ.get("OIDC4AC_E2E_PASSWORD", "Alice-password-123")
 ADMIN_USERNAME = os.environ.get("OIDC4AC_E2E_ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("OIDC4AC_E2E_ADMIN_PASSWORD", "admin")
 TOTP_SECRET = os.environ.get("OIDC4AC_E2E_TOTP_SECRET", "DJmQfC73VGFhw7D4QJ8A")
+SMTP4DEV = os.environ.get("OIDC4AC_E2E_SMTP4DEV_URL", "http://localhost:5080").rstrip("/")
 TIMEOUT = float(os.environ.get("OIDC4AC_E2E_TIMEOUT", "90"))
 LAST_TOTP_COUNTER: int | None = None
 
@@ -268,6 +269,65 @@ def allow_loopback_secure_cookies(session: requests.Session) -> None:
             cookie.secure = False
 
 
+def smtp_messages() -> list[dict[str, Any]]:
+    response = requests.get(f"{SMTP4DEV}/api/messages", timeout=15)
+    check(response.status_code == 200, f"smtp4dev message API returned HTTP {response.status_code}.")
+    payload = response.json()
+    if isinstance(payload, list):
+        messages = payload
+    elif isinstance(payload, dict):
+        messages = payload.get("results") or payload.get("messages") or payload.get("items") or []
+    else:
+        messages = []
+    check(isinstance(messages, list), "smtp4dev message API did not return a message list.")
+    return [message for message in messages if isinstance(message, dict)]
+
+
+def smtp_message_key(message: dict[str, Any]) -> str:
+    return str(message.get("id") or message.get("guid") or json.dumps(message, sort_keys=True))
+
+
+def smtp_verification_code(previous_messages: set[str]) -> str:
+    """Wait for the code emitted by the email authenticator."""
+    def extract_code(body: str) -> str | None:
+        patterns = (
+            r"verification code\s+is\s*:\s*(\d{6})",
+            r"verification code\s+is\s+<[^>]+>\s*(\d{6})",
+        )
+        for pattern in patterns:
+            match = re.search(pattern, body, re.IGNORECASE | re.DOTALL)
+            if match:
+                return match.group(1)
+        return None
+
+    deadline = time.monotonic() + TIMEOUT
+    while time.monotonic() < deadline:
+        for message in smtp_messages():
+            if smtp_message_key(message) in previous_messages:
+                continue
+            if "OIDC4AC verification code" not in json.dumps(message):
+                continue
+            detail = message
+            message_id = message.get("id") or message.get("guid")
+            if message_id is not None:
+                encoded_id = quote(str(message_id), safe='')
+                raw_response = requests.get(f"{SMTP4DEV}/api/messages/{encoded_id}/raw", timeout=15)
+                if raw_response.status_code == 200:
+                    code = extract_code(raw_response.text)
+                    if code:
+                        return code
+                detail_response = requests.get(f"{SMTP4DEV}/api/messages/{encoded_id}", timeout=15)
+                if detail_response.status_code == 200:
+                    candidate = detail_response.json()
+                    if isinstance(candidate, dict):
+                        detail = candidate
+            code = extract_code(json.dumps(detail))
+            if code:
+                return code
+        time.sleep(1)
+    raise CheckFailure("smtp4dev did not receive an OIDC4AC verification code within the test timeout.")
+
+
 def clear_keycloak_cookies(session: requests.Session) -> None:
     """Drop only the issuer SSO cookies, retaining the RP's Flask session."""
     for cookie in list(session.cookies):
@@ -277,9 +337,10 @@ def clear_keycloak_cookies(session: requests.Session) -> None:
 
 def authorize(request_claims: dict[str, Any], *, session: requests.Session | None = None,
               prompt_login: bool = True, omit_claims: bool = False,
-              offline_access: bool = False) -> AuthorizationResult:
+              offline_access: bool = False, use_email_code: bool = False) -> AuthorizationResult:
     """Drive the test client, Keycloak login form, OTP form, and callback."""
     session = session or requests.Session()
+    previous_smtp_messages = {smtp_message_key(message) for message in smtp_messages()} if use_email_code else set()
     data: dict[str, str] = {"prompt_login": "on"} if prompt_login else {}
     if offline_access:
         data["offline_access"] = "on"
@@ -322,7 +383,8 @@ def authorize(request_claims: dict[str, Any], *, session: requests.Session | Non
             continue
         if "kc-otp-login-form" in forms:
             submitted.append("kc-otp-login-form")
-            response = post_form(session, response, forms["kc-otp-login-form"], {"otp": current_totp()})
+            otp = smtp_verification_code(previous_smtp_messages) if use_email_code else current_totp()
+            response = post_form(session, response, forms["kc-otp-login-form"], {"otp": otp})
             continue
         if "kc-totp-settings-form" in forms:
             raise CheckFailure("Keycloak asked to enrol OTP. The imported lab realm must provide Alice's fixed test TOTP credential.")
@@ -408,7 +470,9 @@ def test_discovery_and_workbench() -> None:
     discovery = requests.get(f"{CLIENT}/discovery", timeout=15)
     check(discovery.status_code == 200, f"Test-client discovery endpoint returned HTTP {discovery.status_code}.")
     metadata = discovery.json()
-    check(metadata.get("identifiers") == ["otp", "pop", "pwd"], "Discovery did not expose the native method identifiers.")
+    check(metadata.get("identifiers") == ["email", "otp", "pop", "pwd"], "Discovery did not expose the native method identifiers.")
+    check("email_verification_method" in metadata["methods"]["email"]["properties"],
+          "The visual builder did not receive the email property suggestion.")
     check("pwd_derivation_algorithm" in metadata["methods"]["pwd"]["properties"],
           "The visual builder did not receive the password property suggestion.")
     check("otp_algorithm" in metadata["methods"]["otp"]["properties"],
@@ -1054,6 +1118,24 @@ def test_password_and_otp_all_of() -> None:
           "OTP properties did not describe the verified TOTP credential in UserInfo.")
 
 
+def test_email_authenticator_sends_and_verifies_code() -> None:
+    expression = method("email", properties={
+        "email_verification_method": {"value": "code", "essential": True},
+    })
+    result = authorize(claims(expression), use_email_code=True).require_success()
+    check(result.forms == ["kc-otp-login-form"],
+          f"Email authentication did not use the standard verification-code form: {result.forms!r}.")
+    id_details, userinfo_details = assert_complete_event(
+        result.json_section("Verified ID Token"),
+        result.json_section("Access-token-bound UserInfo"),
+        {"email"},
+    )
+    for label, details in (("ID Token", id_details), ("UserInfo", userinfo_details)):
+        properties = details["email"].get("amr_properties", {})
+        check(properties.get("email_verification_method") == "code",
+              f"{label} did not preserve the email verification-method property.")
+
+
 def test_repeated_method_executions_preserve_each_timestamp() -> None:
     expression = {"all_of": [method("pwd"), method("pwd")]}
     result = authorize(claims(expression)).require_success()
@@ -1151,6 +1233,7 @@ def main() -> int:
         ("best-effort value constraint reports actual property", test_best_effort_value_constraint_reports_actual_property),
         ("identifier values and numeric property bounds", test_identifier_values_and_numeric_property_bounds),
         ("essential password and OTP all_of", test_password_and_otp_all_of),
+        ("email authenticator sends and verifies an SMTP code", test_email_authenticator_sends_and_verifies_code),
         ("repeated method executions preserve timestamps", test_repeated_method_executions_preserve_each_timestamp),
         ("independent delivery projections retain one complete event", test_independent_delivery_projections_preserve_the_complete_event),
         ("single-location disclosure", test_single_location_disclosure),

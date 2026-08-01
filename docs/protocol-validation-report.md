@@ -6,7 +6,7 @@ The author clarifications PD-001 through PD-010 make an experimental Keycloak
 implementation feasible. The published draft at
 `fc7c2c5d5155530cd4b71ee44f37cf11e2a578c2` was not independently implementable
 without those decisions. As of 2026-08-01, the covered protocol paths have
-passed 55 focused unit tests, 36 real authorization-code HTTP scenarios, nine
+passed 55 focused unit tests, 37 real authorization-code HTTP scenarios, nine
 browser/WebAuthn scenarios, and five focused Arquillian authorization
 integration tests. The separate provider fixture and its integration source
 are preserved under `providers/` and `tests/integration/`. This is an

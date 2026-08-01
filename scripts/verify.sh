@@ -23,7 +23,9 @@ DISCOVERY=$(curl --fail --silent --show-error "$ISSUER/.well-known/openid-config
 jq --exit-status '
   .amr_details_request_supported == true and
   (.claims_supported | index("amr_details")) and
-  (.amr_identifiers_supported | sort == ["otp", "pop", "pwd"]) and
+  (.amr_identifiers_supported | sort == ["email", "otp", "pop", "pwd"]) and
+  (.email_metadata_supported | sort == ["assurance_level", "channel", "trust_framework"]) and
+  (.email_verification_method_values_supported == ["code"]) and
   (.otp_properties_supported | sort == ["otp_algorithm", "otp_delivery_method", "otp_format", "otp_length", "otp_time_to_live"]) and
   (.otp_algorithm_values_supported | sort == ["HOTP", "TOTP"]) and
   (.otp_delivery_method_values_supported == ["app"]) and

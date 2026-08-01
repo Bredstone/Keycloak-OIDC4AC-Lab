@@ -32,6 +32,7 @@ from flask import Flask, jsonify, render_template, request, session, url_for
 ISSUER = os.environ.get("OIDC_ISSUER", "http://keycloak.localhost:8080/realms/oidc4ac")
 CLIENT_ID = os.environ.get("OIDC_CLIENT_ID", "oidc4ac-test-client")
 CLIENT_SECRET = os.environ.get("OIDC_CLIENT_SECRET", "oidc4ac-lab-client-secret")
+SMTP4DEV_URL = os.environ.get("SMTP4DEV_URL", "http://localhost:5080")
 
 # These caches deliberately only live for the lifetime of this disposable lab
 # process. Keeping the full request server-side also keeps experimental raw
@@ -107,6 +108,7 @@ def home_response(raw_claims: str | None = None, error: str | None = None, statu
     page = render_template(
         "home.html",
         issuer=ISSUER,
+        smtp4dev_url=SMTP4DEV_URL,
         raw_claims=raw_claims if raw_claims is not None else pretty_json(DEFAULT_CLAIMS),
         error=error,
     )

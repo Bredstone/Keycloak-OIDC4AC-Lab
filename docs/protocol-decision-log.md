@@ -45,7 +45,7 @@ considered fully verified until those rows are complete.
   session creation, credential creation, and credential update times are not
   substitutes.
 - Coverage: structural validation, native snapshots, SSO reuse, refresh, and
-  UserInfo are exercised by the 36 HTTP scenarios and focused integration
+  UserInfo are exercised by the 37 HTTP scenarios and focused integration
   tests.
 
 ### PD-002 — Canonical password derivation property name

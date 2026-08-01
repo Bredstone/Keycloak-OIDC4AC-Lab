@@ -9,6 +9,7 @@ RUN mkdir -p "${KEYCLOAK_HOME}" \
     && mkdir -p "${KEYCLOAK_HOME}/data/import"
 
 COPY config/realm-import.json ${KEYCLOAK_HOME}/data/import/oidc4ac-realm.json
+COPY providers/oidc4ac-test-email/target/oidc4ac-test-email-1.0.0-SNAPSHOT.jar ${KEYCLOAK_HOME}/providers/
 
 WORKDIR ${KEYCLOAK_HOME}
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]

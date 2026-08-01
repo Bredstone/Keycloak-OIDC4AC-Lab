@@ -10,6 +10,7 @@
   <dl class="lab-facts">
     <div><dt>Issuer</dt><dd><code>{{ issuer }}</code></dd></div>
     <div><dt>Demo user</dt><dd><code>alice / Alice-password-123</code></dd></div>
+    <div><dt>Email inbox</dt><dd><a href="{{ smtp4dev_url }}" target="_blank" rel="noreferrer">Open smtp4dev</a></dd></div>
   </dl>
 </section>
 
@@ -27,6 +28,13 @@
         <option value="password-and-otp">Password and OTP (all_of)</option>
         <option value="password-or-otp">Password or OTP (one_of)</option>
         <option value="nested-methods">Nested: (password AND OTP) OR proof-of-possession</option>
+        <option value="email-code">Email verification code</option>
+        <option value="password-and-email">Password and email (all_of)</option>
+        <option value="password-or-email">Password or email (one_of)</option>
+        <option value="otp-or-email">OTP or email (one_of)</option>
+        <option value="nested-password-otp-or-email">Nested: password AND (OTP OR email)</option>
+        <option value="email-property">Email code with required property</option>
+        <option value="email-assurance">Email metadata and property constraints</option>
         <option value="password-property">Password property requested</option>
         <option value="essential-password-property">Essential password property</option>
         <option value="unsupported">Unsupported method (expected generic failure)</option>
@@ -327,12 +335,24 @@
     'password-and-otp': { essential: true, operator: 'all_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { identifier: 'otp', timeRequested: true, timeEssential: true }] },
     'password-or-otp': { essential: true, operator: 'one_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { identifier: 'otp', timeRequested: true, timeEssential: true }] },
     'nested-methods': { essential: true, operator: 'one_of', deliveries: ['id_token', 'userinfo'], nodes: [{ operator: 'all_of', children: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { identifier: 'otp', timeRequested: true, timeEssential: true }] }, { identifier: 'pop', timeRequested: true, timeEssential: true }] },
+    'email-code': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'email', timeRequested: true, timeEssential: true }] },
+    'password-and-email': { essential: true, operator: 'all_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { identifier: 'email', timeRequested: true, timeEssential: true }] },
+    'password-or-email': { essential: true, operator: 'one_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { identifier: 'email', timeRequested: true, timeEssential: true }] },
+    'otp-or-email': { essential: true, operator: 'one_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'otp', timeRequested: true, timeEssential: true }, { identifier: 'email', timeRequested: true, timeEssential: true }] },
+    'nested-password-otp-or-email': { essential: true, operator: 'all_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { operator: 'one_of', children: [{ identifier: 'otp', timeRequested: true, timeEssential: true }, { identifier: 'email', timeRequested: true, timeEssential: true }] }] },
+    'email-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'email', timeRequested: true, timeEssential: true, properties: [{ name: 'email_verification_method', mode: 'value', value: 'code', essential: true }] }] },
+    'email-assurance': { rawClaims: { id_token: { amr_details: { essential: true, amr_identifier: { value: 'email' }, amr_metadata: { time: { essential: true }, trust_framework: { essential: true }, assurance_level: { essential: true } }, amr_properties: { email_verification_method: { essential: true } } } }, userinfo: { amr_details: { essential: true, amr_identifier: { value: 'email' }, amr_metadata: { time: { essential: true }, trust_framework: { essential: true }, assurance_level: { essential: true } }, amr_properties: { email_verification_method: { essential: true } } } } } },
     'password-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true, properties: [{ name: 'pwd_derivation_algorithm', mode: 'requested' }] }] },
     'essential-password-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true, properties: [{ name: 'pwd_derivation_algorithm', mode: 'presence', essential: true }] }] },
     unsupported: { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'face', timeRequested: false }] },
   };
   function loadPreset(name) {
     const preset = presets[name]; resetRoot();
+    if (preset.rawClaims) {
+      textarea.value = JSON.stringify(preset.rawClaims, null, 2);
+      document.querySelectorAll('input[name="delivery"]').forEach((input) => { input.checked = own(preset.rawClaims, input.value); });
+      return;
+    }
     preset.nodes.forEach((node) => appendNode(node, expressionRoot));
     document.querySelector('#claim-essential').checked = preset.essential;
     document.querySelector('#operator').value = preset.operator || 'all_of';

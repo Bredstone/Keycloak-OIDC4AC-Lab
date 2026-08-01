@@ -24,26 +24,40 @@ resolve_keycloak_repo "$LAB_DIR" || exit 1
 REPOSITORY_DIR="$KEYCLOAK_REPO"
 RUNTIME_DIR="$LAB_DIR/.runtime"
 BUILD_DIR="$LAB_DIR/.build"
-ARCHIVE="$REPOSITORY_DIR/quarkus/dist/target/keycloak-26.7.0.tar.gz"
+SOURCE_ARCHIVE="$REPOSITORY_DIR/quarkus/dist/target/keycloak-26.7.0.tar.gz"
+ARCHIVE="$SOURCE_ARCHIVE"
+PREPARED_ARCHIVE="$BUILD_DIR/keycloak-26.7.0.tar.gz"
+PROVIDER_JAR="$LAB_DIR/providers/oidc4ac-test-email/target/oidc4ac-test-email-1.0.0-SNAPSHOT.jar"
 HTTP_PORT="${OIDC4AC_LAB_HTTP_PORT:-8080}"
 
 mkdir -p "$RUNTIME_DIR"
 if [[ "${OIDC4AC_LAB_SKIP_BUILD:-false}" != "true" ]]; then
     "$REPOSITORY_DIR/mvnw" -pl quarkus/dist -am -DskipTests -Dskip.pnpm=true package
+elif [[ -f "$PREPARED_ARCHIVE" ]]; then
+    ARCHIVE="$PREPARED_ARCHIVE"
 fi
 
 if [[ ! -f "$ARCHIVE" ]]; then
     echo "Expected distribution archive was not produced: $ARCHIVE" >&2
     exit 1
 fi
+if [[ ! -f "$PROVIDER_JAR" ]]; then
+    echo "The email provider JAR is missing: $PROVIDER_JAR" >&2
+    echo "Run './dev.sh provider-build' before starting Keycloak." >&2
+    exit 1
+fi
 
 mkdir -p "$BUILD_DIR"
-cp "$ARCHIVE" "$BUILD_DIR/keycloak-26.7.0.tar.gz"
+if [[ "$ARCHIVE" != "$PREPARED_ARCHIVE" ]]; then
+    cp "$ARCHIVE" "$PREPARED_ARCHIVE"
+fi
 
 KEYCLOAK_HOME=$(mktemp -d "$RUNTIME_DIR/keycloak.XXXXXX")
 tar -xzf "$ARCHIVE" -C "$KEYCLOAK_HOME" --strip-components=1
 mkdir -p "$KEYCLOAK_HOME/data/import"
 cp "$LAB_DIR/config/realm-import.json" "$KEYCLOAK_HOME/data/import/oidc4ac-realm.json"
+mkdir -p "$KEYCLOAK_HOME/providers"
+cp "$PROVIDER_JAR" "$KEYCLOAK_HOME/providers/"
 
 export KC_BOOTSTRAP_ADMIN_USERNAME="${OIDC4AC_LAB_ADMIN_USERNAME:-admin}"
 export KC_BOOTSTRAP_ADMIN_PASSWORD="${OIDC4AC_LAB_ADMIN_PASSWORD:-admin}"

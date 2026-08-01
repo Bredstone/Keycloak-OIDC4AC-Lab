@@ -63,7 +63,7 @@ public final class OIDC4ACEmailAuthenticatorFactory implements AuthenticatorFact
 
     @Override
     public String getHelpText() {
-        return "Deterministic email factor for OIDC4AC SPI integration tests.";
+        return "Email verification-code factor for OIDC4AC SPI integration tests.";
     }
 
     @Override

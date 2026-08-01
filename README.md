@@ -3,15 +3,16 @@
 This standalone lab exercises the native OIDC4AC implementation by fetching
 and building the project fork on demand. It deliberately reuses the PoC's
 familiar realm, `alice` user, `oidc4ac-test-client`, and browser-facing Flask
-client, but it does not load the old PoC provider JAR or custom authenticators.
+client. The included email provider is a small external-SPI fixture used to
+exercise extensibility; it is built and loaded automatically by the lab.
 
 The repository is organized by responsibility: `config/` contains realm
 fixtures, `test-client/` is the relying party, `e2e/` contains black-box HTTP
-and browser runners, `providers/` contains optional provider examples,
-`scripts/` contains lifecycle checks, and `docs/` contains protocol and
-coverage notes. `.runtime/` and `.build/` are generated local state. The
-optional email provider fixture is preserved under
-`providers/oidc4ac-test-email/`; it is not loaded by the default realm.
+and browser runners, `providers/` contains provider examples, `scripts/`
+contains lifecycle checks, and `docs/` contains protocol and coverage notes.
+`.runtime/` and `.build/` are generated local state. The email provider fixture
+is preserved under `providers/oidc4ac-test-email/` and is loaded by the default
+realm.
 
 ## Prerequisites
 
@@ -28,17 +29,28 @@ and browser URLs all use the same host name.
 
 ## One-command workflow
 
-From the lab root, `dev.sh` downloads and builds the configured Keycloak fork
-when needed, starts Keycloak and the test client, and keeps generated state
-under the ignored `.runtime/` and `.build/` directories:
+From the lab root, `dev.sh run` first stops currently running Docker containers
+and removes this lab's Compose services (including orphaned services from an
+earlier run), then downloads and builds the configured Keycloak fork when
+needed, starts Keycloak and the test client in the foreground, and keeps
+generated state under the ignored `.runtime/` and `.build/` directories. It
+also stops an existing Keycloak process listening on the configured issuer
+port. Keycloak and test-client logs stay attached to the terminal; press
+`Ctrl-C` to stop the lab.
+This cleanup intentionally includes containers from other Docker Compose
+projects; use `--no-kill` when that would be disruptive.
+The disposable email factor sends codes through smtp4dev; inspect the inbox at
+`http://localhost:5080`:
 
 ```bash
-./dev.sh
+./dev.sh run
 ```
 
 The same wrapper exposes the common lifecycle, verification, and test commands:
 
 ```bash
+./dev.sh run            # stop running containers, then start the lab
+./dev.sh run --no-kill  # preserve existing Docker containers and Keycloak
 ./dev.sh status         # show service and process status
 ./dev.sh logs           # show recent logs
 ./dev.sh verify         # run discovery/readiness checks
@@ -51,6 +63,10 @@ The same wrapper exposes the common lifecycle, verification, and test commands:
 ./dev.sh down           # stop services
 ./dev.sh clean          # stop services and remove generated state
 ```
+
+Use `--no-kill` with `run`, `verify`, or a test command when other local
+containers or a Keycloak process must remain running. Without it, the command
+cleans the local Docker environment before starting the requested workflow.
 
 The wrapper shallow-clones the fork's `oidc4ac-implementation` branch into
 the ignored `.runtime/keycloak-source` directory. Override the source path or
@@ -74,8 +90,15 @@ python3 -m pip install -r requirements-dev.txt
 
 ## Manual lifecycle
 
-In one terminal, download the fork, build its distribution, import the realm,
-and start it with the native feature enabled:
+In one terminal, download the fork, build its distribution, compile the
+optional email provider, and start smtp4dev:
+
+```bash
+./dev.sh provider-build
+docker compose up -d smtp4dev
+```
+
+Then start Keycloak with the native feature enabled:
 
 ```bash
 bash scripts/start-keycloak.sh
@@ -128,8 +151,9 @@ docker compose --profile browser-e2e run --build --rm browser-e2e
 ```
 
 The browser profile copies the prepared `.build/keycloak-26.7.0.tar.gz` archive
-into its temporary Keycloak image, so build the checkout first (the normal
-`scripts/start-keycloak.sh` command prepares this archive). It is isolated from the regular
+and compiled email provider into its temporary Keycloak image, so prepare both
+first with `./dev.sh build` and `./dev.sh provider-build` (the normal
+`./dev.sh test-browser` command does this automatically). It is isolated from the regular
 localhost:5000 client and native server process.
 
 The suite submits requests through this Flask test client, follows the actual
@@ -150,7 +174,7 @@ verifies that a missing virtual credential does not disclose enrollment or
 request details.
 OIDC4AC-specific SSO reauthentication after an event fails a new essential
 requirement remains a separate browser-flow scenario. The HTTP runner currently
-reports 36 scenarios, including realm enablement gates, structured optional
+reports 37 scenarios, including realm enablement gates, structured optional
 metadata, identifier/value/numeric constraints, invalid client/redirect checks,
 disclosure policy enforcement, query/fragment/form-post and signed JARM
 response-mode errors, concurrent same-SSO grant projection isolation, repeated
@@ -172,7 +196,7 @@ the normal cookie authenticator and an **OIDC4AC browser forms** subflow as
 alternatives. Inside the latter, a required built-in **Username Form** first
 identifies the End-User, then the **OIDC4AC factor planner** appears
 immediately before the required `oidc4ac-factors` container. The container
-exposes the `pwd`, `otp`, and `pop` factor subflows, in that realm-defined
+exposes the `pwd`, `otp`, `pop`, and `email` factor subflows, in that realm-defined
 priority order. The request controls which of those configured factors are
 attempted; it cannot introduce a new provider or change their realm
 configuration.
@@ -213,9 +237,11 @@ into the local Maven cache, which also allows the command to work when the
 fork was downloaded into `.runtime/keycloak-source`.
 
 The JAR is written to `providers/oidc4ac-test-email/target/`, which is ignored
-by Git. The default realm does not install or configure this fixture. It is
-intended for custom-provider integration experiments and can be copied into a
-disposable Keycloak image or mounted into `providers/` during a test run.
+by Git. `dev.sh run` loads it automatically, and the imported realm exposes the
+`email` factor alongside `pwd`, `otp`, and `pop`. The authenticator uses the
+realm SMTP settings, sends a six-digit code, and validates it in the standard
+Keycloak OTP form. In this lab the SMTP settings target smtp4dev, so no
+external mail account is required.
 
 ## Request workbench
 
@@ -259,10 +285,10 @@ Once both services are up, run:
 bash scripts/verify.sh
 ```
 
-It verifies discovery advertises `amr_details`, the native `pwd`, `otp`, and
-`pop` identifiers, safe password and OTP profile properties, finite OTP mode,
-format, and delivery-method vocabularies, and no value enumeration for the
-open derivation-algorithm domain.
+It verifies discovery advertises `amr_details`, the native `pwd`, `otp`, `pop`,
+and `email` identifiers, safe password and OTP profile properties, the email
+verification method, finite OTP mode, format, and delivery-method vocabularies,
+and no value enumeration for the open derivation-algorithm domain.
 
 ## Expected protocol cases
 
@@ -272,6 +298,13 @@ open derivation-algorithm domain.
   actual execution time.
 - **Password and OTP / password or OTP**: exercise `all_of` and `one_of`
   without selecting or disclosing an artificial branch.
+- **Email verification**: choose an email-code preset, inspect the code
+  delivered to smtp4dev at `http://localhost:5080`, and submit it in Keycloak.
+- **Email combinations**: exercise password-and-email, password-or-email,
+  OTP-or-email, and nested `password AND (OTP OR email)` expressions.
+- **Email assurance metadata**: use the preset that requests the email
+  method's `trust_framework`, `assurance_level`, and verification-method
+  property as essential values.
 - **Nested methods**: builds `(pwd AND otp) OR pop` to exercise recursive
   expression handling in both the client and Keycloak request parser.
 - **Password properties**: request an available property or require it to be

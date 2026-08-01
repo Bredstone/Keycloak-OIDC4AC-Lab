@@ -5,6 +5,15 @@
   "attributes": {
     "oidc4ac.enabled": "true"
   },
+  "smtpServer": {
+    "host": "localhost",
+    "port": "2525",
+    "from": "keycloak@oidc4ac.test",
+    "fromDisplayName": "OIDC4AC Lab",
+    "ssl": "false",
+    "starttls": "false",
+    "auth": "false"
+  },
   "sslRequired": "none",
   "webAuthnPolicyPasswordlessPasskeysEnabled": false,
   "webAuthnPolicyResidentKey": "required",
@@ -210,6 +219,13 @@
           "requirement": "ALTERNATIVE",
           "priority": 30,
           "userSetupAllowed": false
+        },
+        {
+          "flowAlias": "oidc4ac:email",
+          "authenticatorFlow": true,
+          "requirement": "ALTERNATIVE",
+          "priority": 40,
+          "userSetupAllowed": false
         }
       ]
     },
@@ -254,6 +270,22 @@
       "authenticationExecutions": [
         {
           "authenticator": "webauthn-authenticator",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "alias": "oidc4ac:email",
+      "description": "Email verification-code factor for the OIDC4AC lab.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "oidc4ac-test-email",
           "authenticatorFlow": false,
           "requirement": "REQUIRED",
           "priority": 10,
