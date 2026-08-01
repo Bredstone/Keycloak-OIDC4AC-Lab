@@ -56,7 +56,7 @@ the real Keycloak flow and token pipeline. The planner accepts both imported
 
 The focused Arquillian suite also decrypts an RSA-OAEP/A256GCM encrypted JARM
 error and verifies the generic `unmet_authentication_requirements` payload.
-The packaged email provider emits evidence-bearing `trust_framework` and
+The standalone Maven email provider emits evidence-bearing `trust_framework` and
 `assurance_level` metadata, proving that custom providers can contribute
 open-valued metadata through discovery, planning, and token projection.
 

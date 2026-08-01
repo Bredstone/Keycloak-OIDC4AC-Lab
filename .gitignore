@@ -1,5 +1,7 @@
 .runtime/
 .build/
 .env
+**/target/
+*.jar
 __pycache__/
 *.py[cod]

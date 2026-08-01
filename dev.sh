@@ -9,6 +9,7 @@ if [[ "$KEYCLOAK_REPO" != /* ]]; then
 fi
 RUNTIME_DIR="$ROOT_DIR/.runtime"
 BUILD_DIR="$ROOT_DIR/.build"
+PROVIDER_DIR="$ROOT_DIR/providers/oidc4ac-test-email"
 KEYCLOAK_PID_FILE="$RUNTIME_DIR/keycloak.pid"
 KEYCLOAK_LOG="$RUNTIME_DIR/keycloak.log"
 KEYCLOAK_ARCHIVE="$BUILD_DIR/keycloak-26.7.0.tar.gz"
@@ -83,6 +84,16 @@ build_keycloak() {
     [[ -f "$archive" ]] || die "Keycloak distribution not found: $archive"
     cp "$archive" "$KEYCLOAK_ARCHIVE"
     echo "Prepared $KEYCLOAK_ARCHIVE"
+}
+
+build_provider() {
+    [[ -x "$KEYCLOAK_REPO/mvnw" ]] || die "Keycloak checkout not found or mvnw is not executable: $KEYCLOAK_REPO"
+    echo "Building the optional email provider..."
+    (
+        cd "$ROOT_DIR"
+        "$KEYCLOAK_REPO/mvnw" -f "$PROVIDER_DIR/pom.xml" -DskipTests package
+    )
+    echo "Prepared $PROVIDER_DIR/target/oidc4ac-test-email-1.0.0-SNAPSHOT.jar"
 }
 
 start_host_keycloak() {
@@ -169,6 +180,10 @@ verify() {
         bash "$ROOT_DIR/scripts/verify.sh"
 }
 
+lint() {
+    bash "$ROOT_DIR/scripts/lint.sh"
+}
+
 status() {
     echo "Lab root:       $ROOT_DIR"
     echo "Keycloak source: $KEYCLOAK_REPO"
@@ -215,6 +230,8 @@ Lifecycle:
 
 Build and checks:
   build            Build Keycloak and prepare .build/keycloak-26.7.0.tar.gz
+  provider-build   Compile the optional email provider into its ignored target/ directory
+  lint             Run Python, shell, XML, and provider Spotless checks
   verify           Start the lab and run discovery/readiness checks
 
 Tests:
@@ -240,6 +257,8 @@ case "$command" in
     logs) logs ;;
     clean) clean ;;
     build) build_keycloak ;;
+    provider-build) build_provider ;;
+    lint) lint ;;
     verify) verify ;;
     test-http) test_http ;;
     test-browser) test_browser ;;

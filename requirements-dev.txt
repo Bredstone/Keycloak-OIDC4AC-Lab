@@ -1,0 +1,2 @@
+# Development-only checks for the lab repository.
+flake8==7.3.0

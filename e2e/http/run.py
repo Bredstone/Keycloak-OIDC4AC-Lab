@@ -22,7 +22,7 @@ import time
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from typing import Any, Callable
-from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse
+from urllib.parse import parse_qs, quote, urljoin, urlparse
 
 import requests
 
@@ -892,9 +892,11 @@ def test_old_grant_userinfo_survives_a_later_authentication() -> None:
 
     later_session = requests.Session()
     later_session.cookies.update(first_cookies)
-    stronger = authorize(claims({"all_of": [method("pwd"), method("otp")]},
-                                 id_token=True, userinfo=True),
-                         session=later_session, prompt_login=False).require_success()
+    stronger = authorize(
+        claims({"all_of": [method("pwd"), method("otp")]}, id_token=True, userinfo=True),
+        session=later_session,
+        prompt_login=False,
+    ).require_success()
     check([detail["amr_identifier"] for detail in detail_list(stronger.json_section("Verified ID Token"))]
           == ["pwd", "otp"],
           "The later authentication did not record the stronger authentication event.")
@@ -969,7 +971,6 @@ def test_ordinary_sso_reuse_without_oidc4ac_claim() -> None:
 def test_sso_reauthentication_for_stronger_request() -> None:
     """A stronger request re-runs the configured browser flow and satisfies both factors."""
     first = authorize(claims(method("pwd"))).require_success()
-    first_id = detail_map(first.json_section("Verified ID Token"))
     stronger = claims({"all_of": [method("pwd"), method("otp")]})
     second = authorize(stronger, session=first.session, prompt_login=False).require_success()
     check(second.forms == ["kc-form-login", "kc-otp-login-form"],
@@ -1020,7 +1021,7 @@ def test_invalid_method_shape_is_rejected_before_authentication() -> None:
 def test_invalid_request_grammar_variants_are_rejected_before_authentication() -> None:
     invalid_requests = [
         {
-            "id_token": {"amr_details": {"essential": True, "unknown_operator": [],}},
+            "id_token": {"amr_details": {"essential": True, "unknown_operator": []}},
         },
         {
             "id_token": {"amr_details": {"essential": True, "all_of": [

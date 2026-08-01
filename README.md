@@ -17,7 +17,7 @@ optional email provider fixture is preserved under
 
 - Docker with Docker Compose v2, for the test client;
 - Java 21 and Maven prerequisites needed to build the Keycloak checkout; and
-- `curl` and `jq`, for the smoke check.
+- `curl`, `jq`, and the development dependencies in `requirements-dev.txt`.
 
 `*.localhost` resolves to the loopback address in modern browsers. The Compose
 client maps `keycloak.localhost` to Docker's host gateway so its issuer, token,
@@ -39,6 +39,8 @@ The same wrapper exposes the common lifecycle, verification, and test commands:
 ./dev.sh status         # show service and process status
 ./dev.sh logs           # show recent logs
 ./dev.sh verify         # run discovery/readiness checks
+./dev.sh lint           # run Python, shell, XML, and Java formatting checks
+./dev.sh provider-build # compile the optional email provider (target/ is ignored)
 ./dev.sh test-http      # run HTTP end-to-end scenarios
 ./dev.sh test-browser   # run virtual-CTAP2 browser scenarios
 ./dev.sh test-disabled  # verify the realm feature gate
@@ -52,6 +54,12 @@ The Keycloak checkout defaults to the sibling directory
 `OIDC4AC_LAB_KEYCLOAK_REPO` to override it. Set
 `OIDC4AC_LAB_SKIP_BUILD=true` after the first successful build to reuse the
 prepared distribution archive.
+
+Install the development lint dependency once with:
+
+```bash
+python3 -m pip install -r requirements-dev.txt
+```
 
 ## Manual lifecycle
 
@@ -185,6 +193,23 @@ password screen. This includes the Account Console login. The separate
 Username Form is important for requests such as `otp + pop`: both of those
 authenticators require an identified user, but neither is responsible for
 collecting a username. Username collection is not recorded as an AMR method.
+
+## Optional email provider
+
+The disposable email authenticator is a normal Maven project so IDEs can
+resolve the Keycloak APIs and service descriptors. It uses the adjacent
+Keycloak checkout as its Maven parent and keeps Keycloak dependencies in
+`provided` scope; no Keycloak classes are bundled in its JAR. Build it when
+needed with:
+
+```bash
+./dev.sh provider-build
+```
+
+The JAR is written to `providers/oidc4ac-test-email/target/`, which is ignored
+by Git. The default realm does not install or configure this fixture. It is
+intended for custom-provider integration experiments and can be copied into a
+disposable Keycloak image or mounted into `providers/` during a test run.
 
 ## Request workbench
 
