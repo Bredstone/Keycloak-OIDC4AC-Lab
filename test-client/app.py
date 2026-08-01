@@ -19,9 +19,13 @@ limitations under the License.
 from __future__ import annotations
 
 import base64
+import hashlib
+import hmac
 import json
 import os
 import secrets
+import struct
+import time
 from typing import Any
 
 import requests
@@ -33,6 +37,7 @@ ISSUER = os.environ.get("OIDC_ISSUER", "http://keycloak.localhost:8080/realms/oi
 CLIENT_ID = os.environ.get("OIDC_CLIENT_ID", "oidc4ac-test-client")
 CLIENT_SECRET = os.environ.get("OIDC_CLIENT_SECRET", "oidc4ac-lab-client-secret")
 SMTP4DEV_URL = os.environ.get("SMTP4DEV_URL", "http://localhost:5080")
+TOTP_SECRET = os.environ.get("OIDC4AC_TOTP_SECRET", "DJmQfC73VGFhw7D4QJ8A")
 
 # These caches deliberately only live for the lifetime of this disposable lab
 # process. Keeping the full request server-side also keeps experimental raw
@@ -66,6 +71,16 @@ class ClaimsValidationError(ValueError):
 
 def pretty_json(value: Any) -> str:
     return json.dumps(value, indent=2, ensure_ascii=False, sort_keys=False)
+
+
+def current_totp(secret: str = TOTP_SECRET) -> tuple[str, int]:
+    """Return the current disposable lab TOTP and seconds until rotation."""
+    now = int(time.time())
+    counter = now // 30
+    digest = hmac.new(secret.encode(), struct.pack(">Q", counter), hashlib.sha1).digest()
+    offset = digest[-1] & 0x0F
+    value = struct.unpack(">I", digest[offset : offset + 4])[0] & 0x7FFFFFFF
+    return f"{value % 1_000_000:06d}", 30 - (now % 30)
 
 
 def decoded_access_token(token: Any) -> dict[str, Any]:
@@ -130,6 +145,22 @@ def create_app() -> Flask:
     @app.get("/healthz")
     def healthz() -> tuple[dict[str, str], int]:
         return {"status": "ok"}, 200
+
+    @app.get("/otp")
+    def otp_helper() -> str:
+        code, remaining = current_totp()
+        return render_template(
+            "otp.html",
+            username="alice",
+            code=code,
+            remaining=remaining,
+            secret_base32=base64.b32encode(TOTP_SECRET.encode()).decode().rstrip("="),
+        )
+
+    @app.get("/otp-code")
+    def otp_code() -> tuple[dict[str, Any], int]:
+        code, remaining = current_totp()
+        return {"code": code, "remaining": remaining}, 200
 
     @app.get("/discovery")
     def discovery() -> tuple[dict[str, Any], int] | Any:
@@ -273,13 +304,22 @@ def builder_discovery_metadata() -> dict[str, Any]:
         property_names = document.get(f"{identifier}_properties_supported", [])
         if not isinstance(property_names, list):
             property_names = []
+        metadata_names = document.get(f"{identifier}_metadata_supported", [])
+        if not isinstance(metadata_names, list):
+            metadata_names = []
         properties: dict[str, dict[str, list[Any]]] = {}
         for property_name in property_names:
             if not isinstance(property_name, str):
                 continue
             values = document.get(f"{property_name}_values_supported", [])
             properties[property_name] = {"values": values if isinstance(values, list) else []}
-        methods[identifier] = {"properties": properties}
+        metadata: dict[str, dict[str, list[Any]]] = {}
+        for metadata_name in metadata_names:
+            if not isinstance(metadata_name, str):
+                continue
+            values = document.get(f"{metadata_name}_values_supported", [])
+            metadata[metadata_name] = {"values": values if isinstance(values, list) else []}
+        methods[identifier] = {"metadata": metadata, "properties": properties}
 
     return {"identifiers": sorted(methods), "methods": methods}
 

@@ -193,6 +193,11 @@ Open `http://client.localhost:5000`. Sign in as
 `alice / Alice-password-123`. The workbench starts with **Essential password**
 delivered to both locations.
 
+The workbench header links to an **OTP helper** in a separate browser tab. It
+continuously displays the current six-digit code for Alice's disposable
+pre-registered TOTP credential, so password-and-OTP requests can be tested
+without configuring a separate authenticator application.
+
 Alice is also assigned the minimum built-in Account client roles, so the
 Keycloak Account Console can load after login.
 
@@ -255,6 +260,10 @@ The left-hand visual builder is intended for ordinary experiments:
   issuer's OIDC Discovery document. They are offered as suggestions and used
   to prefill a new property; values outside Discovery remain available for
   negative tests.
+- Optional AMR metadata is loaded per method from Discovery and edited in its
+  own section, separate from method properties. Empty metadata/property lists
+  are shown explicitly, while exact values, presence constraints, value sets,
+  and numeric ranges keep a consistent row layout.
 - Select a starting scenario, add factors or logical groups, and use the
   arrows to reorder sibling nodes. A node's position is JSON order inside its
   logical expression; it is not an instruction for Keycloak to run

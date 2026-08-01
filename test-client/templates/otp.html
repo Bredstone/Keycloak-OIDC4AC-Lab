@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}OTP helper · OIDC4AC native lab{% endblock %}
+{% block content %}
+<section class="result-heading otp-heading">
+  <p class="eyebrow">Disposable lab tool</p>
+  <h1>Pre-registered OTP</h1>
+  <p class="muted">Use this page in a separate tab while testing an <code>otp</code> request for the seeded <code>{{ username }}</code> user. The code refreshes automatically every 30 seconds.</p>
+</section>
+
+<section class="card otp-card" aria-labelledby="otp-code-title">
+  <div class="otp-card-heading">
+    <div>
+      <p class="eyebrow">alice · TOTP</p>
+      <h2 id="otp-code-title" class="otp-code">{{ code }}</h2>
+    </div>
+    <div class="otp-countdown"><span id="otp-remaining">{{ remaining }}</span>s remaining</div>
+  </div>
+  <p id="otp-status" class="helper" role="status">The displayed code is generated from the disposable realm credential.</p>
+  <dl class="otp-details">
+    <div><dt>Username</dt><dd><code>{{ username }}</code></dd></div>
+    <div><dt>Algorithm</dt><dd>HMAC-SHA1</dd></div>
+    <div><dt>Digits / period</dt><dd>6 digits / 30 seconds</dd></div>
+    <div><dt>Authenticator seed</dt><dd><code>{{ secret_base32 }}</code></dd></div>
+  </dl>
+  <p class="muted otp-warning">This seed and code are for the disposable lab only. Do not copy them to a real realm.</p>
+</section>
+
+<script>
+(() => {
+  const code = document.querySelector('.otp-code');
+  const remaining = document.querySelector('#otp-remaining');
+  const status = document.querySelector('#otp-status');
+
+  async function refresh() {
+    try {
+      const response = await fetch('/otp-code', { headers: { Accept: 'application/json' } });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'OTP refresh failed.');
+      code.textContent = payload.code;
+      remaining.textContent = payload.remaining;
+      status.textContent = 'The displayed code is generated from the disposable realm credential.';
+    } catch (error) {
+      status.textContent = `Unable to refresh the OTP code: ${error.message}`;
+    }
+  }
+
+  window.setInterval(refresh, 1000);
+})();
+</script>
+{% endblock %}

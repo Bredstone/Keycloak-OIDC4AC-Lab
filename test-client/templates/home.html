@@ -75,9 +75,10 @@
 <template id="factor-template">
   <article class="expression-node factor-card">
     <header><div><span class="node-title"></span><label>Method identifier <input class="factor-id" list="method-identifiers" value="pwd" required></label></div><div class="row-actions"><button class="quiet move-up" type="button" title="Move node up">↑</button><button class="quiet move-down" type="button" title="Move node down">↓</button><button class="danger remove-node" type="button">Remove</button></div></header>
-    <datalist class="property-suggestions"></datalist>
+    <datalist class="property-suggestions"></datalist><datalist class="metadata-suggestions"></datalist>
     <div class="constraint-grid time-constraint"><div><strong>Execution time</strong><p>Request the mandatory <code>amr_metadata.time</code> value.</p></div><label><input class="time-requested" type="checkbox" checked> Request time</label><label><input class="time-essential" type="checkbox" checked> Essential</label><label>Maximum age (seconds)<input class="time-max-age" type="number" min="0" step="1" placeholder="Any age"></label></div>
-    <div class="properties"><div class="properties-heading"><div><strong>AMR properties</strong><p>Leave empty to omit <code>amr_properties</code>.</p></div><button class="secondary add-property" type="button">Add property</button></div><div class="property-list"></div></div>
+    <div class="metadata-section"><div class="properties-heading"><div><strong>Optional AMR metadata</strong><p>Metadata describes the authentication event. The mandatory <code>time</code> member is configured above.</p></div><button class="secondary add-metadata" type="button">Add metadata</button></div><div class="metadata-list"></div><p class="empty-constraints metadata-empty">No optional metadata requested.</p></div>
+    <div class="properties"><div class="properties-heading"><div><strong>AMR properties</strong><p>Properties describe this authentication method. Leave empty to omit <code>amr_properties</code>.</p></div><button class="secondary add-property" type="button">Add property</button></div><div class="property-list"></div><p class="empty-constraints property-empty">No AMR properties requested.</p></div>
   </article>
 </template>
 <template id="group-template">
@@ -89,12 +90,20 @@
 </template>
 <template id="property-template">
   <div class="property-row">
-    <label>Property name<input class="property-name" required></label><datalist class="property-value-suggestions"></datalist>
-    <label>Request / constraint<select class="property-mode"><option value="requested">Requested when available</option><option value="value">Exact value</option><option value="values">One of these values</option><option value="range">Numeric range</option><option value="presence">Presence constraint</option></select></label>
-    <label class="property-value-label">Value<input class="property-value" placeholder='e.g. "argon2id"'></label>
-    <label class="property-min-label hidden">Minimum<input class="property-min" type="number" step="any"></label><label class="property-max-label hidden">Maximum<input class="property-max" type="number" step="any"></label>
+    <label class="constraint-name">Property name<input class="property-name" required></label><datalist class="property-value-suggestions"></datalist>
+    <label class="constraint-mode">Request / constraint<select class="property-mode"><option value="requested">Requested when available</option><option value="value">Exact value</option><option value="values">One of these values</option><option value="range">Numeric range</option><option value="presence">Presence constraint</option></select></label>
+    <div class="constraint-values"><label class="property-value-label">Value<input class="property-value" placeholder='e.g. "argon2id"'></label><label class="property-min-label hidden">Minimum<input class="property-min" type="number" step="any"></label><label class="property-max-label hidden">Maximum<input class="property-max" type="number" step="any"></label><span class="constraint-placeholder">No value constraint</span></div>
     <label class="property-essential-label"><input class="property-essential" type="checkbox"> Essential</label>
     <button class="danger remove-property" type="button">Remove</button>
+  </div>
+</template>
+<template id="metadata-template">
+  <div class="property-row metadata-row">
+    <label class="constraint-name">Metadata name<input class="metadata-name" required></label><datalist class="metadata-value-suggestions"></datalist>
+    <label class="constraint-mode">Request / constraint<select class="metadata-mode"><option value="requested">Requested when available</option><option value="value">Exact value</option><option value="values">One of these values</option><option value="range">Numeric range</option><option value="presence">Presence constraint</option></select></label>
+    <div class="constraint-values"><label class="metadata-value-label">Value<input class="metadata-value" placeholder='e.g. "urn:example:framework"'></label><label class="metadata-min-label hidden">Minimum<input class="metadata-min" type="number" step="any"></label><label class="metadata-max-label hidden">Maximum<input class="metadata-max" type="number" step="any"></label><span class="constraint-placeholder">No value constraint</span></div>
+    <label class="metadata-essential-label"><input class="metadata-essential" type="checkbox"> Essential</label>
+    <button class="danger remove-metadata" type="button">Remove</button>
   </div>
 </template>
 <script>
@@ -104,6 +113,7 @@
   const factorTemplate = document.querySelector('#factor-template');
   const groupTemplate = document.querySelector('#group-template');
   const propertyTemplate = document.querySelector('#property-template');
+  const metadataTemplate = document.querySelector('#metadata-template');
   const methodIdentifiers = document.querySelector('#method-identifiers');
   const discoveryStatus = document.querySelector('#discovery-status');
   const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
@@ -120,6 +130,7 @@
   function childNodes(container) { return [...container.children].filter((child) => child.classList.contains('expression-node')); }
   function defaultIdentifier() { return discovery.identifiers.includes('pwd') ? 'pwd' : (discovery.identifiers[0] || 'pwd'); }
   function methodProperties(identifier) { return discovery.methods[identifier]?.properties || {}; }
+  function methodMetadata(identifier) { return discovery.methods[identifier]?.metadata || {}; }
   function optionValue(value) { return typeof value === 'string' ? value : JSON.stringify(value); }
 
   function renumber(container = expressionRoot, prefix = '') {
@@ -143,63 +154,99 @@
     });
   }
 
-  function propertyUi(row) {
-    const mode = row.querySelector('.property-mode').value;
-    row.querySelector('.property-value-label').classList.toggle('hidden', mode === 'range' || mode === 'presence');
-    row.querySelector('.property-min-label').classList.toggle('hidden', mode !== 'range');
-    row.querySelector('.property-max-label').classList.toggle('hidden', mode !== 'range');
-    row.querySelector('.property-essential-label').classList.toggle('hidden', mode === 'requested');
+  function constraintUi(row, prefix) {
+    const mode = row.querySelector(`.${prefix}-mode`).value;
+    const valueLabel = row.querySelector(`.${prefix}-value-label`);
+    const minLabel = row.querySelector(`.${prefix}-min-label`);
+    const maxLabel = row.querySelector(`.${prefix}-max-label`);
+    const essentialLabel = row.querySelector(`.${prefix}-essential-label`);
+    const placeholder = row.querySelector('.constraint-placeholder');
+    valueLabel.classList.toggle('hidden', mode === 'range' || mode === 'presence' || mode === 'requested');
+    minLabel.classList.toggle('hidden', mode !== 'range');
+    maxLabel.classList.toggle('hidden', mode !== 'range');
+    essentialLabel.classList.toggle('hidden', mode === 'requested');
+    placeholder.classList.toggle('hidden', mode !== 'requested' && mode !== 'presence');
   }
 
-  function refreshPropertySuggestions(row) {
+  function propertyUi(row) { constraintUi(row, 'property'); }
+  function metadataUi(row) { constraintUi(row, 'metadata'); }
+
+  function refreshConstraintSuggestions(row, prefix, source) {
     const factor = row.closest('.factor-card');
-    const metadata = methodProperties(factor.querySelector('.factor-id').value.trim())[row.querySelector('.property-name').value.trim()] || {};
-    const datalist = row.querySelector('.property-value-suggestions');
+    const identifier = factor.querySelector('.factor-id').value.trim();
+    const name = row.querySelector(`.${prefix}-name`).value.trim();
+    const metadata = (source === 'metadata' ? methodMetadata(identifier) : methodProperties(identifier))[name] || {};
+    const datalist = row.querySelector(`.${prefix}-value-suggestions`);
     datalist.replaceChildren(...(metadata.values || []).map((value) => {
       const option = document.createElement('option'); option.value = optionValue(value); return option;
     }));
   }
 
+  function refreshPropertySuggestions(row) { refreshConstraintSuggestions(row, 'property', 'property'); }
+  function refreshMetadataSuggestions(row) { refreshConstraintSuggestions(row, 'metadata', 'metadata'); }
+
   function refreshFactorSuggestions(factor) {
     const properties = methodProperties(factor.querySelector('.factor-id').value.trim());
+    const metadata = methodMetadata(factor.querySelector('.factor-id').value.trim());
     const datalist = factor.querySelector('.property-suggestions');
     datalist.replaceChildren(...Object.keys(properties).map((name) => {
       const option = document.createElement('option'); option.value = name; return option;
     }));
-    factor.querySelectorAll('.property-row').forEach((row) => refreshPropertySuggestions(row));
+    const metadataDatalist = factor.querySelector('.metadata-suggestions');
+    metadataDatalist.replaceChildren(...Object.keys(metadata).map((name) => {
+      const option = document.createElement('option'); option.value = name; return option;
+    }));
+    factor.querySelectorAll('.property-row:not(.metadata-row)').forEach((row) => refreshPropertySuggestions(row));
+    factor.querySelectorAll('.metadata-row').forEach((row) => refreshMetadataSuggestions(row));
   }
 
-  function addProperty(factor, property = {}) {
-    const row = propertyTemplate.content.firstElementChild.cloneNode(true);
-    const rowId = `${factor.dataset.nodeId}-property-${factor.querySelectorAll('.property-row').length + 1}`;
-    row.querySelector('.property-name').setAttribute('list', factor.querySelector('.property-suggestions').id);
-    row.querySelector('.property-value-suggestions').id = `${rowId}-values`;
-    row.querySelector('.property-value').setAttribute('list', `${rowId}-values`);
-    const suggestedNames = Object.keys(methodProperties(factor.querySelector('.factor-id').value.trim()));
-    row.querySelector('.property-name').value = property.name ?? suggestedNames[0] ?? '';
-    row.querySelector('.property-mode').value = property.mode || 'requested';
-    row.querySelector('.property-value').value = property.value ?? '';
-    row.querySelector('.property-min').value = property.min ?? '';
-    row.querySelector('.property-max').value = property.max ?? '';
-    row.querySelector('.property-essential').checked = Boolean(property.essential);
-    row.querySelector('.property-mode').addEventListener('change', () => propertyUi(row));
-    row.querySelector('.property-name').addEventListener('input', () => refreshPropertySuggestions(row));
-    row.querySelector('.remove-property').addEventListener('click', () => row.remove());
-    factor.querySelector('.property-list').append(row);
-    propertyUi(row); refreshPropertySuggestions(row);
+  function refreshEmptyState(factor, prefix) {
+    const rows = factor.querySelectorAll(`.${prefix}-row`);
+    factor.querySelector(`.${prefix}-empty`).classList.toggle('hidden', rows.length > 0);
   }
+
+  function addConstraint(factor, prefix, model = {}) {
+    const template = prefix === 'metadata' ? metadataTemplate : propertyTemplate;
+    const row = template.content.firstElementChild.cloneNode(true);
+    const list = factor.querySelector(`.${prefix}-list`);
+    const rowId = `${factor.dataset.nodeId}-${prefix}-${list.querySelectorAll('.property-row').length + 1}`;
+    row.querySelector(`.${prefix}-name`).setAttribute('list', factor.querySelector(`.${prefix}-suggestions`).id);
+    row.querySelector(`.${prefix}-value-suggestions`).id = `${rowId}-values`;
+    row.querySelector(`.${prefix}-value`).setAttribute('list', `${rowId}-values`);
+    const source = prefix === 'metadata' ? methodMetadata : methodProperties;
+    const suggestedNames = Object.keys(source(factor.querySelector('.factor-id').value.trim()));
+    row.querySelector(`.${prefix}-name`).value = model.name ?? suggestedNames[0] ?? '';
+    row.querySelector(`.${prefix}-mode`).value = model.mode || 'requested';
+    row.querySelector(`.${prefix}-value`).value = model.value ?? '';
+    row.querySelector(`.${prefix}-min`).value = model.min ?? '';
+    row.querySelector(`.${prefix}-max`).value = model.max ?? '';
+    row.querySelector(`.${prefix}-essential`).checked = Boolean(model.essential);
+    row.querySelector(`.${prefix}-mode`).addEventListener('change', () => prefix === 'metadata' ? metadataUi(row) : propertyUi(row));
+    row.querySelector(`.${prefix}-name`).addEventListener('input', () => prefix === 'metadata' ? refreshMetadataSuggestions(row) : refreshPropertySuggestions(row));
+    row.querySelector(`.remove-${prefix}`).addEventListener('click', () => { row.remove(); refreshEmptyState(factor, prefix); });
+    list.append(row);
+    prefix === 'metadata' ? metadataUi(row) : propertyUi(row);
+    prefix === 'metadata' ? refreshMetadataSuggestions(row) : refreshPropertySuggestions(row);
+    refreshEmptyState(factor, prefix);
+  }
+
+  function addProperty(factor, property = {}) { addConstraint(factor, 'property', property); }
+  function addMetadata(factor, metadata = {}) { addConstraint(factor, 'metadata', metadata); }
 
   function addFactor(model = {}, container = expressionRoot) {
     const factor = factorTemplate.content.firstElementChild.cloneNode(true);
     factor.dataset.nodeId = `node-${++nodeSequence}`;
     factor.querySelector('.property-suggestions').id = `${factor.dataset.nodeId}-properties`;
+    factor.querySelector('.metadata-suggestions').id = `${factor.dataset.nodeId}-metadata`;
     factor.querySelector('.factor-id').value = model.identifier ?? defaultIdentifier();
     factor.querySelector('.time-requested').checked = model.timeRequested !== false;
     factor.querySelector('.time-essential').checked = Boolean(model.timeEssential);
     factor.querySelector('.time-max-age').value = model.maxAge ?? '';
     factor.querySelector('.factor-id').addEventListener('input', () => refreshFactorSuggestions(factor));
     factor.querySelector('.add-property').addEventListener('click', () => addProperty(factor));
+    factor.querySelector('.add-metadata').addEventListener('click', () => addMetadata(factor));
     (model.properties || []).forEach((property) => addProperty(factor, property));
+    (model.metadata || []).forEach((metadata) => addMetadata(factor, metadata));
     wireNodeActions(factor); container.append(factor); refreshFactorSuggestions(factor); renumber();
     return factor;
   }
@@ -229,6 +276,7 @@
     const wantsTime = factor.querySelector('.time-requested').checked;
     const timeEssential = factor.querySelector('.time-essential').checked;
     const maxAge = factor.querySelector('.time-max-age').value.trim();
+    const metadata = {};
     if (wantsTime || maxAge) {
       const time = {};
       if (timeEssential) time.essential = true;
@@ -237,32 +285,43 @@
         if (!Number.isInteger(seconds) || seconds < 0) throw new Error('Maximum age must be a non-negative integer.');
         time.max_age = seconds;
       }
-      expression.amr_metadata = { time: Object.keys(time).length ? time : null };
+      metadata.time = Object.keys(time).length ? time : null;
     }
+    factor.querySelectorAll('.metadata-row').forEach((row) => {
+      const name = row.querySelector('.metadata-name').value.trim();
+      if (!name) throw new Error('Every metadata row needs a metadata name.');
+      if (name === 'time') throw new Error('Execution time is configured in the execution-time section.');
+      metadata[name] = constraintValue(row, 'metadata', name);
+    });
+    if (Object.keys(metadata).length) expression.amr_metadata = metadata;
     const properties = {};
-    factor.querySelectorAll('.property-row').forEach((row) => {
+    factor.querySelectorAll('.property-row:not(.metadata-row)').forEach((row) => {
       const name = row.querySelector('.property-name').value.trim();
       if (!name) throw new Error('Every property row needs a property name.');
-      const mode = row.querySelector('.property-mode').value;
-      const essential = row.querySelector('.property-essential').checked;
-      if (mode === 'requested') { properties[name] = null; return; }
-      const constraint = {};
-      if (essential) constraint.essential = true;
-      if (mode === 'value') constraint.value = parseScalar(row.querySelector('.property-value').value, name);
-      if (mode === 'values') {
-        const values = row.querySelector('.property-value').value.split(',').map((item) => item.trim()).filter(Boolean);
-        if (!values.length) throw new Error(`${name} needs at least one comma-separated value.`);
-        constraint.values = values.map((value) => parseScalar(value, name));
-      }
-      if (mode === 'range') {
-        const min = row.querySelector('.property-min').value.trim(); const max = row.querySelector('.property-max').value.trim();
-        if (!min && !max) throw new Error(`${name} needs a minimum or maximum.`);
-        if (min) constraint.min = Number(min); if (max) constraint.max = Number(max);
-      }
-      properties[name] = constraint;
+      properties[name] = constraintValue(row, 'property', name);
     });
     if (Object.keys(properties).length) expression.amr_properties = properties;
     return expression;
+  }
+
+  function constraintValue(row, prefix, name) {
+    const mode = row.querySelector(`.${prefix}-mode`).value;
+    const essential = row.querySelector(`.${prefix}-essential`).checked;
+    if (mode === 'requested') return null;
+    const constraint = {};
+    if (essential) constraint.essential = true;
+    if (mode === 'value') constraint.value = parseScalar(row.querySelector(`.${prefix}-value`).value, name);
+    if (mode === 'values') {
+      const values = row.querySelector(`.${prefix}-value`).value.split(',').map((item) => item.trim()).filter(Boolean);
+      if (!values.length) throw new Error(`${name} needs at least one comma-separated value.`);
+      constraint.values = values.map((value) => parseScalar(value, name));
+    }
+    if (mode === 'range') {
+      const min = row.querySelector(`.${prefix}-min`).value.trim(); const max = row.querySelector(`.${prefix}-max`).value.trim();
+      if (!min && !max) throw new Error(`${name} needs a minimum or maximum.`);
+      if (min) constraint.min = Number(min); if (max) constraint.max = Number(max);
+    }
+    return constraint;
   }
 
   function nodeExpression(node) {
@@ -302,7 +361,8 @@
   function factorModel(expression) {
     if (!expression || typeof expression !== 'object' || !expression.amr_identifier || !own(expression.amr_identifier, 'value')) throw new Error('A method expression needs amr_identifier.value.');
     const time = expression.amr_metadata && expression.amr_metadata.time;
-    return { identifier: expression.amr_identifier.value, timeRequested: time !== undefined, timeEssential: Boolean(time && time.essential), maxAge: time && time.max_age, properties: Object.entries(expression.amr_properties || {}).map(([name, constraint]) => propertyModel(name, constraint)) };
+    const metadata = Object.entries(expression.amr_metadata || {}).filter(([name]) => name !== 'time').map(([name, constraint]) => propertyModel(name, constraint));
+    return { identifier: expression.amr_identifier.value, timeRequested: time !== undefined, timeEssential: Boolean(time && time.essential), maxAge: time && time.max_age, metadata, properties: Object.entries(expression.amr_properties || {}).map(([name, constraint]) => propertyModel(name, constraint)) };
   }
   function expressionModel(expression) {
     if (Array.isArray(expression?.all_of)) return { operator: 'all_of', children: expression.all_of.map(expressionModel) };
@@ -341,18 +401,13 @@
     'otp-or-email': { essential: true, operator: 'one_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'otp', timeRequested: true, timeEssential: true }, { identifier: 'email', timeRequested: true, timeEssential: true }] },
     'nested-password-otp-or-email': { essential: true, operator: 'all_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { operator: 'one_of', children: [{ identifier: 'otp', timeRequested: true, timeEssential: true }, { identifier: 'email', timeRequested: true, timeEssential: true }] }] },
     'email-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'email', timeRequested: true, timeEssential: true, properties: [{ name: 'email_verification_method', mode: 'value', value: 'code', essential: true }] }] },
-    'email-assurance': { rawClaims: { id_token: { amr_details: { essential: true, amr_identifier: { value: 'email' }, amr_metadata: { time: { essential: true }, trust_framework: { essential: true }, assurance_level: { essential: true } }, amr_properties: { email_verification_method: { essential: true } } } }, userinfo: { amr_details: { essential: true, amr_identifier: { value: 'email' }, amr_metadata: { time: { essential: true }, trust_framework: { essential: true }, assurance_level: { essential: true } }, amr_properties: { email_verification_method: { essential: true } } } } } },
+    'email-assurance': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'email', timeRequested: true, timeEssential: true, metadata: [{ name: 'trust_framework', mode: 'presence', essential: true }, { name: 'assurance_level', mode: 'presence', essential: true }], properties: [{ name: 'email_verification_method', mode: 'presence', essential: true }] }] },
     'password-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true, properties: [{ name: 'pwd_derivation_algorithm', mode: 'requested' }] }] },
     'essential-password-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true, properties: [{ name: 'pwd_derivation_algorithm', mode: 'presence', essential: true }] }] },
     unsupported: { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'face', timeRequested: false }] },
   };
   function loadPreset(name) {
     const preset = presets[name]; resetRoot();
-    if (preset.rawClaims) {
-      textarea.value = JSON.stringify(preset.rawClaims, null, 2);
-      document.querySelectorAll('input[name="delivery"]').forEach((input) => { input.checked = own(preset.rawClaims, input.value); });
-      return;
-    }
     preset.nodes.forEach((node) => appendNode(node, expressionRoot));
     document.querySelector('#claim-essential').checked = preset.essential;
     document.querySelector('#operator').value = preset.operator || 'all_of';

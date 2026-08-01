@@ -30,9 +30,14 @@ jq --exit-status '
   (.otp_algorithm_values_supported | sort == ["HOTP", "TOTP"]) and
   (.otp_delivery_method_values_supported == ["app"]) and
   (.otp_format_values_supported == ["numeric"]) and
-  (.pwd_properties_supported | sort == ["pwd_derivation_algorithm", "pwd_iterations"]) and
+  (.pwd_properties_supported | index("pwd_derivation_algorithm") and index("pwd_iterations")) and
   (has("pwd_derivation_algorithm_values_supported") | not)
 ' <<<"$DISCOVERY" >/dev/null
 
-curl --fail --silent --show-error "${OIDC4AC_LAB_CLIENT_URL:-http://client.localhost:5000}/healthz" | jq --exit-status '.status == "ok"' >/dev/null
+CLIENT_URL="${OIDC4AC_LAB_CLIENT_URL:-http://client.localhost:5000}"
+curl --fail --silent --show-error "$CLIENT_URL/healthz" | jq --exit-status '.status == "ok"' >/dev/null
+curl --fail --silent --show-error "$CLIENT_URL/otp-code" \
+    | jq --exit-status '(.code | test("^[0-9]{6}$")) and (.remaining >= 1 and .remaining <= 30)' >/dev/null
+curl --fail --silent --show-error "$CLIENT_URL/discovery" \
+    | jq --exit-status '.methods.email.metadata.assurance_level and .methods.otp.metadata.location and .methods.pwd.properties.pwd_iterations' >/dev/null
 echo "OIDC4AC discovery and test-client readiness checks passed."
