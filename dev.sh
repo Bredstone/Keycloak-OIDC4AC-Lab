@@ -15,6 +15,7 @@ KEYCLOAK_ARCHIVE="$BUILD_DIR/keycloak-26.7.0.tar.gz"
 ISSUER="${OIDC4AC_LAB_ISSUER:-http://keycloak.localhost:8080/realms/oidc4ac}"
 CLIENT_URL="${OIDC4AC_LAB_CLIENT_URL:-http://client.localhost:${OIDC4AC_LAB_CLIENT_PORT:-5000}}"
 SMTP4DEV_WEB_URL="${OIDC4AC_LAB_SMTP_WEB_URL:-http://localhost:${OIDC4AC_LAB_SMTP_WEB_PORT:-5080}}"
+BUILDER_IMAGE="${OIDC4AC_LAB_BUILDER_IMAGE:-maven:3.9-eclipse-temurin-21}"
 KILL_ENVIRONMENT=true
 
 compose() {
@@ -33,6 +34,25 @@ die() {
 
 require_command() {
     command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
+}
+
+run_maven_container() {
+    require_command docker
+    [[ -n "${KEYCLOAK_REPO:-}" ]] || die "Keycloak source must be resolved before starting the build container"
+
+    mkdir -p "$RUNTIME_DIR/maven-cache"
+    local uid gid
+    uid=$(id -u)
+    gid=$(id -g)
+    docker run --rm \
+        --user "$uid:$gid" \
+        --mount "type=bind,src=$ROOT_DIR,dst=/workspace" \
+        --mount "type=bind,src=$KEYCLOAK_REPO,dst=/keycloak-source" \
+        --workdir /workspace \
+        --env HOME=/tmp \
+        --env MAVEN_CONFIG=/workspace/.runtime/maven-cache \
+        --env MAVEN_OPTS=-Dmaven.repo.local=/workspace/.runtime/maven-cache/repository \
+        "$BUILDER_IMAGE" "$@"
 }
 
 ensure_keycloak_repo() {
@@ -116,11 +136,15 @@ build_keycloak() {
     [[ -x "$KEYCLOAK_REPO/mvnw" ]] || die "Keycloak checkout not found or mvnw is not executable: $KEYCLOAK_REPO"
     mkdir -p "$BUILD_DIR"
     if [[ "${OIDC4AC_LAB_SKIP_BUILD:-false}" != "true" ]]; then
-        echo "Building Keycloak distribution from $KEYCLOAK_REPO..."
-        (
-            cd "$KEYCLOAK_REPO"
+        echo "Building Keycloak distribution in Docker from $KEYCLOAK_REPO..."
+        run_maven_container bash -lc '
+            set -euo pipefail
+            cd /keycloak-source
+            # The frontend plugin recreates this generated link. A previous
+            # host build may have left it pointing at an absolute host path.
+            rm -f js/node/pnpm
             ./mvnw -pl quarkus/dist -am -DskipTests -Dskip.pnpm=true package
-        )
+        '
     fi
 
     local archive="$KEYCLOAK_REPO/quarkus/dist/target/keycloak-26.7.0.tar.gz"
@@ -132,17 +156,15 @@ build_keycloak() {
 build_provider() {
     ensure_keycloak_repo
     [[ -x "$KEYCLOAK_REPO/mvnw" ]] || die "Keycloak checkout not found or mvnw is not executable: $KEYCLOAK_REPO"
-    echo "Preparing the Keycloak SPI artifacts for the provider..."
-    (
-        cd "$KEYCLOAK_REPO"
+    echo "Building the optional email provider in Docker..."
+    run_maven_container bash -lc '
+        set -euo pipefail
+        cd /keycloak-source
         ./mvnw -N -DskipTests install
         ./mvnw -pl server-spi-private -am -DskipTests -Dskip.pnpm=true install
-    )
-    echo "Building the optional email provider..."
-    (
-        cd "$ROOT_DIR"
-        "$KEYCLOAK_REPO/mvnw" -f "$PROVIDER_DIR/pom.xml" -DskipTests clean package
-    )
+        cd /workspace
+        /keycloak-source/mvnw -f providers/oidc4ac-test-email/pom.xml -DskipTests clean package
+    '
     echo "Prepared $PROVIDER_DIR/target/oidc4ac-test-email-1.0.0-SNAPSHOT.jar"
 }
 
@@ -224,6 +246,7 @@ clean_docker_services() {
 start_lab() {
     clean_docker_services
     start_smtp4dev
+    build_keycloak
     build_provider
     start_host_keycloak
     start_client_detached
@@ -252,6 +275,7 @@ run() {
 
     clean_docker_services
     start_smtp4dev
+    build_keycloak
     build_provider
     start_host_keycloak
 
@@ -360,8 +384,8 @@ Lifecycle:
   clean            Stop services and remove generated .runtime/.build state
 
 Build and checks:
-  build            Build Keycloak and prepare .build/keycloak-26.7.0.tar.gz
-  provider-build   Compile the optional email provider into its ignored target/ directory
+  build            Build Keycloak in Docker and prepare .build/keycloak-26.7.0.tar.gz
+  provider-build   Compile the optional email provider in Docker into target/
   lint             Run Python, shell, XML, and provider Spotless checks
   verify           Start the lab and run discovery/readiness checks
 

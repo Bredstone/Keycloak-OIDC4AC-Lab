@@ -38,6 +38,23 @@ PY
 
 resolve_keycloak_repo "$ROOT_DIR" || die "unable to prepare the Keycloak implementation checkout"
 
-"$KEYCLOAK_REPO/mvnw" -f "$PROVIDER_DIR/pom.xml" -DskipTests spotless:check
+MAVEN_IMAGE="${OIDC4AC_LAB_BUILDER_IMAGE:-maven:3.9-eclipse-temurin-21}"
+mkdir -p "$ROOT_DIR/.runtime/maven-cache"
+docker run --rm \
+    --user "$(id -u):$(id -g)" \
+    --mount "type=bind,src=$ROOT_DIR,dst=/workspace" \
+    --mount "type=bind,src=$KEYCLOAK_REPO,dst=/keycloak-source" \
+    --workdir /workspace \
+    --env HOME=/tmp \
+    --env MAVEN_CONFIG=/workspace/.runtime/maven-cache \
+    --env MAVEN_OPTS=-Dmaven.repo.local=/workspace/.runtime/maven-cache/repository \
+    "$MAVEN_IMAGE" bash -lc '
+        set -euo pipefail
+        cd /keycloak-source
+        ./mvnw -N -DskipTests install
+        ./mvnw -pl server-spi-private -am -DskipTests -Dskip.pnpm=true install
+        cd /workspace
+        /keycloak-source/mvnw -f providers/oidc4ac-test-email/pom.xml -DskipTests spotless:check
+    '
 
 echo "Lint checks passed."

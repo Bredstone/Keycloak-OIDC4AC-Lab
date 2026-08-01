@@ -16,9 +16,13 @@ realm.
 
 ## Prerequisites
 
-- Docker with Docker Compose v2, for the test client;
-- Java 21 and Maven prerequisites needed to build the Keycloak checkout; and
+- Docker with Docker Compose v2; and
 - `curl`, `jq`, Git, and the development dependencies in `requirements-dev.txt`.
+
+Java and Maven are not required on the host. Keycloak and the optional email
+provider are compiled inside a disposable Docker build container. The build
+container mounts the lab checkout and the downloaded Keycloak source, and
+keeps its Maven cache under the ignored `.runtime/` directory.
 
 Network access is needed on the first run so the wrapper can clone the
 configured Keycloak fork.
@@ -31,8 +35,8 @@ and browser URLs all use the same host name.
 
 From the lab root, `dev.sh run` first stops currently running Docker containers
 and removes this lab's Compose services (including orphaned services from an
-earlier run), then downloads and builds the configured Keycloak fork when
-needed, starts Keycloak and the test client in the foreground, and keeps
+earlier run), then downloads and builds the configured Keycloak fork in Docker
+when needed, starts Keycloak and the test client in the foreground, and keeps
 generated state under the ignored `.runtime/` and `.build/` directories. It
 also stops an existing Keycloak process listening on the configured issuer
 port. Keycloak and test-client logs stay attached to the terminal; press
@@ -55,7 +59,7 @@ The same wrapper exposes the common lifecycle, verification, and test commands:
 ./dev.sh logs           # show recent logs
 ./dev.sh verify         # run discovery/readiness checks
 ./dev.sh lint           # run Python, shell, XML, and Java formatting checks
-./dev.sh provider-build # compile the optional email provider (target/ is ignored)
+./dev.sh provider-build # compile the optional email provider in Docker
 ./dev.sh test-http      # run HTTP end-to-end scenarios
 ./dev.sh test-browser   # run virtual-CTAP2 browser scenarios
 ./dev.sh test-disabled  # verify the realm feature gate
@@ -90,10 +94,11 @@ python3 -m pip install -r requirements-dev.txt
 
 ## Manual lifecycle
 
-In one terminal, download the fork, build its distribution, compile the
-optional email provider, and start smtp4dev:
+In one terminal, download the fork, build its distribution and compile the
+optional email provider in Docker, then start smtp4dev:
 
 ```bash
+./dev.sh build
 ./dev.sh provider-build
 docker compose up -d smtp4dev
 ```
@@ -233,8 +238,7 @@ Keycloak classes are bundled in its JAR. Build it when needed with:
 ```
 
 The first provider build installs the fork's parent and server SPI artifacts
-into the local Maven cache, which also allows the command to work when the
-fork was downloaded into `.runtime/keycloak-source`.
+into the ignored `.runtime/maven-cache` directory through the build container.
 
 The JAR is written to `providers/oidc4ac-test-email/target/`, which is ignored
 by Git. `dev.sh run` loads it automatically, and the imported realm exposes the
