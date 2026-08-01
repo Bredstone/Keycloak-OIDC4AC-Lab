@@ -118,6 +118,10 @@ start_host_keycloak() {
         stop_host_keycloak
     fi
 
+    if wait_for_url "$ISSUER" 2; then
+        die "Keycloak already responds at $ISSUER but is not managed by this lab; stop the other instance first"
+    fi
+
     echo "Starting Keycloak from $KEYCLOAK_REPO..."
     nohup env \
         OIDC4AC_LAB_KEYCLOAK_REPO="$KEYCLOAK_REPO" \
@@ -130,6 +134,12 @@ start_host_keycloak() {
         echo "Keycloak did not become ready. Recent log output:" >&2
         tail -n 80 "$KEYCLOAK_LOG" >&2 || true
         stop_host_keycloak
+        return 1
+    fi
+    if ! pid_is_running; then
+        echo "Keycloak exited before becoming ready. Recent log output:" >&2
+        tail -n 80 "$KEYCLOAK_LOG" >&2 || true
+        rm -f "$KEYCLOAK_PID_FILE"
         return 1
     fi
     echo "Keycloak is ready at $ISSUER"
