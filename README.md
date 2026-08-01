@@ -72,8 +72,8 @@ Use `--no-kill` with `run`, `verify`, or a test command when other local
 containers or a Keycloak process must remain running. Without it, the command
 cleans the local Docker environment before starting the requested workflow.
 
-The wrapper shallow-clones the fork's `oidc4ac-implementation` branch into
-the ignored `.runtime/keycloak-source` directory. Override the source path or
+The wrapper fetches the fork's `oidc4ac-implementation` branch into the
+ignored `.runtime/keycloak-source` directory on every build. Override the source path or
 download location only when developing against a different implementation:
 
 ```bash
@@ -82,9 +82,6 @@ export OIDC4AC_LAB_KEYCLOAK_REPO=/path/to/keycloak-OIDC4AC
 export OIDC4AC_LAB_KEYCLOAK_REPO_URL=https://github.com/Bredstone/keycloak-OIDC4AC.git
 export OIDC4AC_LAB_KEYCLOAK_REF=oidc4ac-implementation
 ```
-
-Set `OIDC4AC_LAB_SKIP_BUILD=true` after the first successful build to reuse
-the prepared distribution archive.
 
 Install the development lint dependency once with:
 
@@ -109,8 +106,9 @@ Then start Keycloak with the native feature enabled:
 bash scripts/start-keycloak.sh
 ```
 
-After a successful build, set `OIDC4AC_LAB_SKIP_BUILD=true` to reuse the
-existing distribution archive for a later lab restart.
+Every `./dev.sh run` fetches the configured implementation branch and rebuilds
+the Keycloak distribution and providers, so the lab cannot silently run an
+outdated artifact.
 
 `OIDC4AC_LAB_HTTP_PORT` changes the Keycloak port when an isolated local run
 is useful. Set the same issuer in Compose with `OIDC4AC_LAB_ISSUER`, and use

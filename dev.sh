@@ -136,19 +136,17 @@ build_keycloak() {
     ensure_keycloak_repo
     [[ -x "$KEYCLOAK_REPO/mvnw" ]] || die "Keycloak checkout not found or mvnw is not executable: $KEYCLOAK_REPO"
     mkdir -p "$BUILD_DIR"
-    if [[ "${OIDC4AC_LAB_SKIP_BUILD:-false}" != "true" ]]; then
-        echo "Building Keycloak distribution in Docker from $KEYCLOAK_REPO..."
-        run_maven_container bash -lc '
-            set -euo pipefail
-            cd /keycloak-source
-            # The frontend plugin recreates this generated link. A previous
-            # host build may have left it pointing at an absolute host path.
-            rm -rf js/themes-vendor/target js/node_modules js/node/node_modules
-            rm -f js/node/pnpm
-            ./mvnw clean -pl quarkus/dist -am -DskipTests
-            ./mvnw -pl quarkus/dist -am -DskipTests package
-        '
-    fi
+    echo "Building Keycloak distribution in Docker from $KEYCLOAK_REPO..."
+    run_maven_container bash -lc '
+        set -euo pipefail
+        cd /keycloak-source
+        # The frontend plugin recreates this generated link. A previous
+        # host build may have left it pointing at an absolute host path.
+        rm -rf js/themes-vendor/target js/node_modules js/node/node_modules
+        rm -f js/node/pnpm
+        ./mvnw clean -pl quarkus/dist -am -DskipTests
+        ./mvnw -pl quarkus/dist -am -DskipTests package
+    '
 
     local archive="$KEYCLOAK_REPO/quarkus/dist/target/keycloak-26.7.0.tar.gz"
     [[ -f "$archive" ]] || die "Keycloak distribution not found: $archive"
@@ -403,7 +401,8 @@ Other:
   --no-kill         Preserve running containers and existing Keycloak processes before startup
   help              Show this help
 
-The wrapper shallow-clones the fork into ignored .runtime/keycloak-source.
+The wrapper shallow-clones or refreshes the fork into ignored
+.runtime/keycloak-source on every build.
 Override the source checkout with OIDC4AC_LAB_KEYCLOAK_REPO, or override the
 download with OIDC4AC_LAB_KEYCLOAK_REPO_URL and OIDC4AC_LAB_KEYCLOAK_REF.
 EOF

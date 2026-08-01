@@ -24,7 +24,6 @@ resolve_keycloak_repo "$LAB_DIR" || exit 1
 REPOSITORY_DIR="$KEYCLOAK_REPO"
 RUNTIME_DIR="$LAB_DIR/.runtime"
 BUILD_DIR="$LAB_DIR/.build"
-SOURCE_ARCHIVE="$REPOSITORY_DIR/quarkus/dist/target/keycloak-26.7.0.tar.gz"
 PREPARED_ARCHIVE="$BUILD_DIR/keycloak-26.7.0.tar.gz"
 PROVIDER_JAR="$LAB_DIR/providers/oidc4ac-test-email/target/oidc4ac-test-email-1.0.0-SNAPSHOT.jar"
 HTTP_PORT="${OIDC4AC_LAB_HTTP_PORT:-8080}"
@@ -32,11 +31,9 @@ HTTP_PORT="${OIDC4AC_LAB_HTTP_PORT:-8080}"
 mkdir -p "$RUNTIME_DIR"
 if [[ -f "$PREPARED_ARCHIVE" ]]; then
     ARCHIVE="$PREPARED_ARCHIVE"
-elif [[ "${OIDC4AC_LAB_SKIP_BUILD:-false}" == "true" && -f "$SOURCE_ARCHIVE" ]]; then
-    ARCHIVE="$SOURCE_ARCHIVE"
 else
     echo "Keycloak distribution archive is missing." >&2
-    echo "Run './dev.sh build' to compile Keycloak in Docker before starting it." >&2
+    echo "Run './dev.sh build' to fetch and compile Keycloak in Docker before starting it." >&2
     exit 1
 fi
 if [[ ! -f "$PROVIDER_JAR" ]]; then
