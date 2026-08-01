@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}OIDC4AC result{% endblock %}
+{% block content %}
+<section class="result-heading"><p class="eyebrow">{{ source }}</p><h1>Verified authentication context</h1><p class="muted">The test client shows only decoded, verified response objects. It deliberately does not print bearer or refresh tokens.</p></section>
+<div class="notice">For a refresh test, overlapping authentication details should describe the same immutable event snapshot as the authorization-code response.</div>
+<div class="result-grid">
+  <section class="card"><h2>Submitted Claim Request Object</h2><pre>{{ claims }}</pre></section>
+  <section class="card"><h2>Feature discovery</h2><pre>{{ discovery }}</pre></section>
+  <section class="card"><h2>Verified ID Token</h2><pre>{{ id_token }}</pre></section>
+  <section class="card"><h2>Verified Access Token (claims only)</h2><pre>{{ access_token }}</pre></section>
+  <section class="card"><h2>Access-token-bound UserInfo</h2><pre>{{ userinfo }}</pre></section>
+</div>
+<div class="button-row result-actions">{% if allow_refresh %}<form method="post" action="/refresh"><button class="primary" type="submit">Refresh tokens and re-check snapshot</button></form>{% endif %}<a class="button secondary" href="/">Compose another request</a></div>
+{% endblock %}

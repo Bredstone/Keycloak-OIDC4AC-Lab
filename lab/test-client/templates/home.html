@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% block title %}OIDC4AC request workbench{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Relying party test client</p>
+    <h1>Compose an authentication request</h1>
+    <p class="muted">Build a valid, nested <code>amr_details</code> Claim Request Object visually, then inspect or edit the exact JSON sent to Keycloak.</p>
+  </div>
+  <dl class="lab-facts">
+    <div><dt>Issuer</dt><dd><code>{{ issuer }}</code></dd></div>
+    <div><dt>Demo user</dt><dd><code>alice / Alice-password-123</code></dd></div>
+  </dl>
+</section>
+
+{% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+
+<div class="workbench-grid">
+  <section class="card builder-card">
+    <div class="card-heading">
+      <div><p class="eyebrow">Visual builder</p><h2>Authentication expression</h2></div>
+      <div class="preset-control"><label for="preset">Starting point</label><select id="preset">
+        <option value="essential-password">Essential password</option>
+        <option value="informational">Informational complete event</option>
+        <option value="best-effort-password">Best-effort password</option>
+        <option value="fresh-password">Fresh password (60 seconds)</option>
+        <option value="password-and-otp">Password and OTP (all_of)</option>
+        <option value="password-or-otp">Password or OTP (one_of)</option>
+        <option value="nested-methods">Nested: (password AND OTP) OR proof-of-possession</option>
+        <option value="password-property">Password property requested</option>
+        <option value="essential-password-property">Essential password property</option>
+        <option value="unsupported">Unsupported method (expected generic failure)</option>
+      </select></div>
+    </div>
+    <p class="helper">Method identifiers and property suggestions come from the issuer’s OIDC Discovery document. You may still type an unadvertised value to exercise failure paths.</p>
+    <p id="discovery-status" class="discovery-status" role="status">Loading method and property suggestions from discovery…</p>
+
+    <div class="builder-options">
+      <label><input id="claim-essential" type="checkbox" checked> The complete claim is essential</label>
+      <label class="select-label">Combine root nodes <select id="operator"><option value="all_of">All must match (all_of)</option><option value="one_of">Any may match (one_of)</option></select></label>
+      <fieldset class="delivery-control"><legend>Request disclosure in</legend><label><input type="checkbox" name="delivery" value="id_token" checked> ID Token</label><label><input type="checkbox" name="delivery" value="userinfo" checked> UserInfo</label></fieldset>
+    </div>
+
+    <p class="helper">A logical group can contain factors or further <code>all_of</code>/<code>one_of</code> groups. Sibling order is JSON order, not an instruction telling the OP which authenticator to execute first.</p>
+    <div id="expression-root" class="expression-children factor-list" aria-live="polite"></div>
+    <div class="button-row"><button class="secondary" id="add-factor" type="button">Add factor</button><button class="secondary" id="add-all-of" type="button">Add all_of group</button><button class="secondary" id="add-one-of" type="button">Add one_of group</button><button class="secondary" id="apply-builder" type="button">Apply builder to JSON</button><button class="quiet" id="load-json" type="button">Load JSON into builder</button></div>
+  </section>
+
+  <section class="card json-card">
+    <div class="card-heading"><div><p class="eyebrow">Advanced mode</p><h2>Claim Request Object</h2></div><button class="quiet" id="format-json" type="button">Format JSON</button></div>
+    <p class="helper">This is the submitted source of truth. You can make independent ID Token and UserInfo projections here. The visual builder supports recursive nested expressions; it loads the first requested delivery projection.</p>
+    <form method="post" action="/login" id="authorization-form">
+      <textarea id="claims-json" name="claims_json" spellcheck="false" aria-label="Claim Request Object">{{ raw_claims }}</textarea>
+      <label class="prompt-option"><input type="checkbox" name="prompt_login" checked> Force a fresh browser login</label>
+      <div class="submit-row"><button class="primary" type="submit">Start authorization</button><button class="secondary" formmethod="post" formaction="/preview">Preview request</button></div>
+    </form>
+  </section>
+</div>
+
+<section class="guide-grid">
+  <article><h3>Essentiality</h3><p>The claim-level switch applies to <code>amr_details</code>. Per-property and time switches are local constraints. Non-essential constraints are best-effort preferences.</p></article>
+  <article><h3>Discovery suggestions</h3><p>Discovery advertising means that the OP understands a method or property; it does not mean it is enrolled or available for the current user or event.</p></article>
+  <article><h3>Truthful responses</h3><p>An OP must omit the whole <code>amr_properties</code> member when it cannot truthfully provide a method profile’s required properties. An essential property may therefore fail generically.</p></article>
+</section>
+
+<datalist id="method-identifiers"></datalist>
+<template id="factor-template">
+  <article class="expression-node factor-card">
+    <header><div><span class="node-title"></span><label>Method identifier <input class="factor-id" list="method-identifiers" value="pwd" required></label></div><div class="row-actions"><button class="quiet move-up" type="button" title="Move node up">↑</button><button class="quiet move-down" type="button" title="Move node down">↓</button><button class="danger remove-node" type="button">Remove</button></div></header>
+    <datalist class="property-suggestions"></datalist>
+    <div class="constraint-grid time-constraint"><div><strong>Execution time</strong><p>Request the mandatory <code>amr_metadata.time</code> value.</p></div><label><input class="time-requested" type="checkbox" checked> Request time</label><label><input class="time-essential" type="checkbox" checked> Essential</label><label>Maximum age (seconds)<input class="time-max-age" type="number" min="0" step="1" placeholder="Any age"></label></div>
+    <div class="properties"><div class="properties-heading"><div><strong>AMR properties</strong><p>Leave empty to omit <code>amr_properties</code>.</p></div><button class="secondary add-property" type="button">Add property</button></div><div class="property-list"></div></div>
+  </article>
+</template>
+<template id="group-template">
+  <article class="expression-node group-card">
+    <header><div><span class="node-title"></span><label>Logical operator <select class="group-operator"><option value="all_of">all_of — every child</option><option value="one_of">one_of — at least one child</option></select></label></div><div class="row-actions"><button class="quiet move-up" type="button" title="Move node up">↑</button><button class="quiet move-down" type="button" title="Move node down">↓</button><button class="danger remove-node" type="button">Remove group</button></div></header>
+    <div class="group-actions"><span>Add a child:</span><button class="secondary add-factor" type="button">Factor</button><button class="secondary add-all-of" type="button">all_of</button><button class="secondary add-one-of" type="button">one_of</button></div>
+    <div class="expression-children nested-children"></div>
+  </article>
+</template>
+<template id="property-template">
+  <div class="property-row">
+    <label>Property name<input class="property-name" required></label><datalist class="property-value-suggestions"></datalist>
+    <label>Request / constraint<select class="property-mode"><option value="requested">Requested when available</option><option value="value">Exact value</option><option value="values">One of these values</option><option value="range">Numeric range</option><option value="presence">Presence constraint</option></select></label>
+    <label class="property-value-label">Value<input class="property-value" placeholder='e.g. "argon2id"'></label>
+    <label class="property-min-label hidden">Minimum<input class="property-min" type="number" step="any"></label><label class="property-max-label hidden">Maximum<input class="property-max" type="number" step="any"></label>
+    <label class="property-essential-label"><input class="property-essential" type="checkbox"> Essential</label>
+    <button class="danger remove-property" type="button">Remove</button>
+  </div>
+</template>
+<script>
+(() => {
+  const expressionRoot = document.querySelector('#expression-root');
+  const textarea = document.querySelector('#claims-json');
+  const factorTemplate = document.querySelector('#factor-template');
+  const groupTemplate = document.querySelector('#group-template');
+  const propertyTemplate = document.querySelector('#property-template');
+  const methodIdentifiers = document.querySelector('#method-identifiers');
+  const discoveryStatus = document.querySelector('#discovery-status');
+  const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+  const selectedDeliveries = () => [...document.querySelectorAll('input[name="delivery"]:checked')].map((item) => item.value);
+  let discovery = { identifiers: [], methods: {} };
+  let nodeSequence = 0;
+
+  function parseScalar(value, label) {
+    const trimmed = value.trim();
+    if (!trimmed) throw new Error(`${label} needs a value.`);
+    try { return JSON.parse(trimmed); } catch (_) { return trimmed; }
+  }
+
+  function childNodes(container) { return [...container.children].filter((child) => child.classList.contains('expression-node')); }
+  function defaultIdentifier() { return discovery.identifiers.includes('pwd') ? 'pwd' : (discovery.identifiers[0] || 'pwd'); }
+  function methodProperties(identifier) { return discovery.methods[identifier]?.properties || {}; }
+  function optionValue(value) { return typeof value === 'string' ? value : JSON.stringify(value); }
+
+  function renumber(container = expressionRoot, prefix = '') {
+    childNodes(container).forEach((node, index) => {
+      const position = prefix ? `${prefix}.${index + 1}` : `${index + 1}`;
+      const isGroup = node.classList.contains('group-card');
+      node.querySelector(':scope > header .node-title').textContent = `${isGroup ? 'Group' : 'Factor'} ${position}`;
+      node.querySelector(':scope > header .move-up').disabled = index === 0;
+      node.querySelector(':scope > header .move-down').disabled = index === childNodes(container).length - 1;
+      if (isGroup) renumber(node.querySelector(':scope > .expression-children'), position);
+    });
+  }
+
+  function wireNodeActions(node) {
+    node.querySelector(':scope > header .remove-node').addEventListener('click', () => { node.remove(); renumber(); });
+    node.querySelector(':scope > header .move-up').addEventListener('click', () => {
+      const previous = node.previousElementSibling; if (previous) node.parentElement.insertBefore(node, previous); renumber();
+    });
+    node.querySelector(':scope > header .move-down').addEventListener('click', () => {
+      const next = node.nextElementSibling; if (next) node.parentElement.insertBefore(next, node); renumber();
+    });
+  }
+
+  function propertyUi(row) {
+    const mode = row.querySelector('.property-mode').value;
+    row.querySelector('.property-value-label').classList.toggle('hidden', mode === 'range' || mode === 'presence');
+    row.querySelector('.property-min-label').classList.toggle('hidden', mode !== 'range');
+    row.querySelector('.property-max-label').classList.toggle('hidden', mode !== 'range');
+    row.querySelector('.property-essential-label').classList.toggle('hidden', mode === 'requested');
+  }
+
+  function refreshPropertySuggestions(row) {
+    const factor = row.closest('.factor-card');
+    const metadata = methodProperties(factor.querySelector('.factor-id').value.trim())[row.querySelector('.property-name').value.trim()] || {};
+    const datalist = row.querySelector('.property-value-suggestions');
+    datalist.replaceChildren(...(metadata.values || []).map((value) => {
+      const option = document.createElement('option'); option.value = optionValue(value); return option;
+    }));
+  }
+
+  function refreshFactorSuggestions(factor) {
+    const properties = methodProperties(factor.querySelector('.factor-id').value.trim());
+    const datalist = factor.querySelector('.property-suggestions');
+    datalist.replaceChildren(...Object.keys(properties).map((name) => {
+      const option = document.createElement('option'); option.value = name; return option;
+    }));
+    factor.querySelectorAll('.property-row').forEach((row) => refreshPropertySuggestions(row));
+  }
+
+  function addProperty(factor, property = {}) {
+    const row = propertyTemplate.content.firstElementChild.cloneNode(true);
+    const rowId = `${factor.dataset.nodeId}-property-${factor.querySelectorAll('.property-row').length + 1}`;
+    row.querySelector('.property-name').setAttribute('list', factor.querySelector('.property-suggestions').id);
+    row.querySelector('.property-value-suggestions').id = `${rowId}-values`;
+    row.querySelector('.property-value').setAttribute('list', `${rowId}-values`);
+    const suggestedNames = Object.keys(methodProperties(factor.querySelector('.factor-id').value.trim()));
+    row.querySelector('.property-name').value = property.name ?? suggestedNames[0] ?? '';
+    row.querySelector('.property-mode').value = property.mode || 'requested';
+    row.querySelector('.property-value').value = property.value ?? '';
+    row.querySelector('.property-min').value = property.min ?? '';
+    row.querySelector('.property-max').value = property.max ?? '';
+    row.querySelector('.property-essential').checked = Boolean(property.essential);
+    row.querySelector('.property-mode').addEventListener('change', () => propertyUi(row));
+    row.querySelector('.property-name').addEventListener('input', () => refreshPropertySuggestions(row));
+    row.querySelector('.remove-property').addEventListener('click', () => row.remove());
+    factor.querySelector('.property-list').append(row);
+    propertyUi(row); refreshPropertySuggestions(row);
+  }
+
+  function addFactor(model = {}, container = expressionRoot) {
+    const factor = factorTemplate.content.firstElementChild.cloneNode(true);
+    factor.dataset.nodeId = `node-${++nodeSequence}`;
+    factor.querySelector('.property-suggestions').id = `${factor.dataset.nodeId}-properties`;
+    factor.querySelector('.factor-id').value = model.identifier ?? defaultIdentifier();
+    factor.querySelector('.time-requested').checked = model.timeRequested !== false;
+    factor.querySelector('.time-essential').checked = Boolean(model.timeEssential);
+    factor.querySelector('.time-max-age').value = model.maxAge ?? '';
+    factor.querySelector('.factor-id').addEventListener('input', () => refreshFactorSuggestions(factor));
+    factor.querySelector('.add-property').addEventListener('click', () => addProperty(factor));
+    (model.properties || []).forEach((property) => addProperty(factor, property));
+    wireNodeActions(factor); container.append(factor); refreshFactorSuggestions(factor); renumber();
+    return factor;
+  }
+
+  function addGroup(model = {}, container = expressionRoot) {
+    const group = groupTemplate.content.firstElementChild.cloneNode(true);
+    group.dataset.nodeId = `node-${++nodeSequence}`;
+    group.querySelector('.group-operator').value = model.operator || 'all_of';
+    const children = group.querySelector('.expression-children');
+    group.querySelector('.add-factor').addEventListener('click', () => addFactor({}, children));
+    group.querySelector('.add-all-of').addEventListener('click', () => addGroup({ operator: 'all_of' }, children));
+    group.querySelector('.add-one-of').addEventListener('click', () => addGroup({ operator: 'one_of' }, children));
+    wireNodeActions(group); container.append(group);
+    if (model.children?.length) model.children.forEach((child) => appendNode(child, children));
+    else addFactor({}, children);
+    renumber(); return group;
+  }
+
+  function appendNode(model, container) {
+    return model?.operator ? addGroup(model, container) : addFactor(model, container);
+  }
+
+  function factorExpression(factor) {
+    const identifier = factor.querySelector('.factor-id').value.trim();
+    if (!identifier) throw new Error('Every factor needs a method identifier.');
+    const expression = { amr_identifier: { value: identifier } };
+    const wantsTime = factor.querySelector('.time-requested').checked;
+    const timeEssential = factor.querySelector('.time-essential').checked;
+    const maxAge = factor.querySelector('.time-max-age').value.trim();
+    if (wantsTime || maxAge) {
+      const time = {};
+      if (timeEssential) time.essential = true;
+      if (maxAge) {
+        const seconds = Number(maxAge);
+        if (!Number.isInteger(seconds) || seconds < 0) throw new Error('Maximum age must be a non-negative integer.');
+        time.max_age = seconds;
+      }
+      expression.amr_metadata = { time: Object.keys(time).length ? time : null };
+    }
+    const properties = {};
+    factor.querySelectorAll('.property-row').forEach((row) => {
+      const name = row.querySelector('.property-name').value.trim();
+      if (!name) throw new Error('Every property row needs a property name.');
+      const mode = row.querySelector('.property-mode').value;
+      const essential = row.querySelector('.property-essential').checked;
+      if (mode === 'requested') { properties[name] = null; return; }
+      const constraint = {};
+      if (essential) constraint.essential = true;
+      if (mode === 'value') constraint.value = parseScalar(row.querySelector('.property-value').value, name);
+      if (mode === 'values') {
+        const values = row.querySelector('.property-value').value.split(',').map((item) => item.trim()).filter(Boolean);
+        if (!values.length) throw new Error(`${name} needs at least one comma-separated value.`);
+        constraint.values = values.map((value) => parseScalar(value, name));
+      }
+      if (mode === 'range') {
+        const min = row.querySelector('.property-min').value.trim(); const max = row.querySelector('.property-max').value.trim();
+        if (!min && !max) throw new Error(`${name} needs a minimum or maximum.`);
+        if (min) constraint.min = Number(min); if (max) constraint.max = Number(max);
+      }
+      properties[name] = constraint;
+    });
+    if (Object.keys(properties).length) expression.amr_properties = properties;
+    return expression;
+  }
+
+  function nodeExpression(node) {
+    if (node.classList.contains('factor-card')) return factorExpression(node);
+    const children = childNodes(node.querySelector(':scope > .expression-children'));
+    if (!children.length) throw new Error('Every all_of or one_of group needs at least one child.');
+    return { [node.querySelector('.group-operator').value]: children.map(nodeExpression) };
+  }
+
+  function buildClaims() {
+    const nodes = childNodes(expressionRoot);
+    const details = {};
+    if (document.querySelector('#claim-essential').checked) details.essential = true;
+    if (nodes.length === 1) Object.assign(details, nodeExpression(nodes[0]));
+    if (nodes.length > 1) details[document.querySelector('#operator').value] = nodes.map(nodeExpression);
+    const claims = {};
+    selectedDeliveries().forEach((delivery) => { claims[delivery] = { amr_details: Object.keys(details).length ? details : null }; });
+    return claims;
+  }
+
+  function applyBuilder() {
+    try {
+      if (!selectedDeliveries().length) throw new Error('Select at least one delivery location.');
+      textarea.value = JSON.stringify(buildClaims(), null, 2);
+    } catch (error) { window.alert(error.message); }
+  }
+
+  function valueForInput(value) { return typeof value === 'string' ? value : JSON.stringify(value); }
+  function propertyModel(name, constraint) {
+    if (constraint === null) return { name, mode: 'requested' };
+    if (!constraint || typeof constraint !== 'object') throw new Error(`Property ${name} is not a supported constraint.`);
+    if (own(constraint, 'value')) return { name, mode: 'value', value: valueForInput(constraint.value), essential: constraint.essential };
+    if (own(constraint, 'values')) return { name, mode: 'values', value: constraint.values.map(valueForInput).join(', '), essential: constraint.essential };
+    if (own(constraint, 'min') || own(constraint, 'max')) return { name, mode: 'range', min: constraint.min, max: constraint.max, essential: constraint.essential };
+    return { name, mode: 'presence', essential: constraint.essential };
+  }
+  function factorModel(expression) {
+    if (!expression || typeof expression !== 'object' || !expression.amr_identifier || !own(expression.amr_identifier, 'value')) throw new Error('A method expression needs amr_identifier.value.');
+    const time = expression.amr_metadata && expression.amr_metadata.time;
+    return { identifier: expression.amr_identifier.value, timeRequested: time !== undefined, timeEssential: Boolean(time && time.essential), maxAge: time && time.max_age, properties: Object.entries(expression.amr_properties || {}).map(([name, constraint]) => propertyModel(name, constraint)) };
+  }
+  function expressionModel(expression) {
+    if (Array.isArray(expression?.all_of)) return { operator: 'all_of', children: expression.all_of.map(expressionModel) };
+    if (Array.isArray(expression?.one_of)) return { operator: 'one_of', children: expression.one_of.map(expressionModel) };
+    return factorModel(expression);
+  }
+  function resetRoot() { expressionRoot.replaceChildren(); nodeSequence = 0; }
+  function loadJson() {
+    try {
+      const claims = JSON.parse(textarea.value);
+      const locations = ['id_token', 'userinfo'].filter((location) => claims[location] && own(claims[location], 'amr_details'));
+      if (!locations.length) throw new Error('JSON must request amr_details in ID Token or UserInfo.');
+      const details = claims[locations[0]].amr_details;
+      resetRoot();
+      if (details !== null) {
+        if (!details || typeof details !== 'object') throw new Error('amr_details must be null or an object.');
+        if (own(details, 'all_of') || own(details, 'one_of') || own(details, 'amr_identifier')) appendNode(expressionModel(details), expressionRoot);
+        document.querySelector('#claim-essential').checked = Boolean(details.essential);
+      } else document.querySelector('#claim-essential').checked = false;
+      document.querySelectorAll('input[name="delivery"]').forEach((input) => { input.checked = locations.includes(input.value); });
+      renumber();
+    } catch (error) { window.alert(`Cannot load this JSON: ${error.message}`); }
+  }
+
+  const presets = {
+    informational: { essential: false, deliveries: ['id_token', 'userinfo'], nodes: [] },
+    'essential-password': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true, properties: [{ name: 'pwd_derivation_algorithm', mode: 'requested' }] }] },
+    'best-effort-password': { essential: false, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: false }] },
+    'fresh-password': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true, maxAge: 60 }] },
+    'password-and-otp': { essential: true, operator: 'all_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { identifier: 'otp', timeRequested: true, timeEssential: true }] },
+    'password-or-otp': { essential: true, operator: 'one_of', deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { identifier: 'otp', timeRequested: true, timeEssential: true }] },
+    'nested-methods': { essential: true, operator: 'one_of', deliveries: ['id_token', 'userinfo'], nodes: [{ operator: 'all_of', children: [{ identifier: 'pwd', timeRequested: true, timeEssential: true }, { identifier: 'otp', timeRequested: true, timeEssential: true }] }, { identifier: 'pop', timeRequested: true, timeEssential: true }] },
+    'password-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true, properties: [{ name: 'pwd_derivation_algorithm', mode: 'requested' }] }] },
+    'essential-password-property': { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'pwd', timeRequested: true, timeEssential: true, properties: [{ name: 'pwd_derivation_algorithm', mode: 'presence', essential: true }] }] },
+    unsupported: { essential: true, deliveries: ['id_token', 'userinfo'], nodes: [{ identifier: 'face', timeRequested: false }] },
+  };
+  function loadPreset(name) {
+    const preset = presets[name]; resetRoot();
+    preset.nodes.forEach((node) => appendNode(node, expressionRoot));
+    document.querySelector('#claim-essential').checked = preset.essential;
+    document.querySelector('#operator').value = preset.operator || 'all_of';
+    document.querySelectorAll('input[name="delivery"]').forEach((input) => { input.checked = preset.deliveries.includes(input.value); });
+    applyBuilder();
+  }
+
+  async function loadDiscovery() {
+    try {
+      const response = await fetch('/discovery', { headers: { Accept: 'application/json' } });
+      const metadata = await response.json();
+      if (!response.ok) throw new Error(metadata.error || 'Discovery request failed.');
+      discovery = metadata;
+      methodIdentifiers.replaceChildren(...discovery.identifiers.map((identifier) => { const option = document.createElement('option'); option.value = identifier; return option; }));
+      document.querySelectorAll('.factor-card').forEach(refreshFactorSuggestions);
+      discoveryStatus.textContent = discovery.identifiers.length ? `Discovery loaded: ${discovery.identifiers.join(', ')}. Property suggestions now follow the selected method.` : 'Discovery did not advertise OIDC4AC methods; custom values remain available.';
+      discoveryStatus.classList.add('loaded');
+    } catch (error) {
+      discoveryStatus.textContent = `Discovery suggestions unavailable: ${error.message} You can still enter custom methods and properties.`;
+      discoveryStatus.classList.add('unavailable');
+    }
+  }
+
+  document.querySelector('#add-factor').addEventListener('click', () => addFactor());
+  document.querySelector('#add-all-of').addEventListener('click', () => addGroup({ operator: 'all_of' }));
+  document.querySelector('#add-one-of').addEventListener('click', () => addGroup({ operator: 'one_of' }));
+  document.querySelector('#apply-builder').addEventListener('click', applyBuilder);
+  document.querySelector('#load-json').addEventListener('click', loadJson);
+  document.querySelector('#format-json').addEventListener('click', () => { try { textarea.value = JSON.stringify(JSON.parse(textarea.value), null, 2); } catch (error) { window.alert(`Cannot format JSON: ${error.message}`); } });
+  document.querySelector('#preset').addEventListener('change', (event) => loadPreset(event.target.value));
+  loadPreset('essential-password');
+  loadDiscovery();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}OIDC4AC request preview{% endblock %}
+{% block content %}
+<section class="result-heading"><p class="eyebrow">Local preview</p><h1>Claim Request Object</h1><p class="muted">This is syntactically valid JSON. Keycloak performs the protocol grammar validation when authorization starts.</p></section>
+<section class="card"><pre>{{ claims }}</pre></section><p><a class="button primary" href="/">Return to request workbench</a></p>
+{% endblock %}

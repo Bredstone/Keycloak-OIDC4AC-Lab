@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}OIDC4AC native lab{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='lab.css') }}">
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="site-header">
+        <a class="brand" href="/">OIDC4AC <span>native lab</span></a>
+        <p>Experimental request workbench</p>
+      </header>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

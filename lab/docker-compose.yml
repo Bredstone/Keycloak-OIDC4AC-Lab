@@ -1,0 +1,98 @@
+name: oidc4ac-native-lab
+
+services:
+  test-client:
+    build:
+      context: ./test-client
+      dockerfile: Dockerfile
+    environment:
+      OIDC_ISSUER: ${OIDC4AC_LAB_ISSUER:-http://keycloak.localhost:8080/realms/oidc4ac}
+      OIDC_CLIENT_ID: oidc4ac-test-client
+      OIDC_CLIENT_SECRET: oidc4ac-lab-client-secret
+      FLASK_SECRET_KEY: ${OIDC4AC_LAB_FLASK_SECRET:-local-development-only-change-me}
+    extra_hosts:
+      - keycloak.localhost:host-gateway
+    ports:
+      - "${OIDC4AC_LAB_CLIENT_PORT:-5000}:5000"
+
+  e2e:
+    profiles: ["e2e"]
+    build:
+      context: ./e2e
+      dockerfile: Dockerfile
+    environment:
+      OIDC4AC_E2E_CLIENT_URL: http://client.localhost:${OIDC4AC_LAB_CLIENT_PORT:-5000}
+    depends_on:
+      test-client:
+        condition: service_started
+    extra_hosts:
+      - client.localhost:host-gateway
+      - keycloak.localhost:host-gateway
+
+  browser-e2e:
+    profiles: ["browser-e2e"]
+    build:
+      context: ./browser-e2e
+      dockerfile: Dockerfile
+    environment:
+      OIDC4AC_BROWSER_CLIENT_URL: http://localhost:5003
+      OIDC4AC_BROWSER_KEYCLOAK_URL: ${OIDC4AC_LAB_BROWSER_ISSUER_BASE:-http://localhost:8186}
+    network_mode: host
+    depends_on:
+      browser-test-client:
+        condition: service_started
+      keycloak:
+        condition: service_started
+
+  browser-test-client:
+    profiles: ["browser-e2e"]
+    build:
+      context: ./test-client
+      dockerfile: Dockerfile
+    environment:
+      OIDC_ISSUER: http://localhost:8186/realms/oidc4ac
+      OIDC_CLIENT_ID: oidc4ac-test-client
+      OIDC_CLIENT_SECRET: oidc4ac-lab-client-secret
+      FLASK_SECRET_KEY: ${OIDC4AC_LAB_FLASK_SECRET:-local-development-only-change-me}
+      PORT: "5003"
+    depends_on:
+      keycloak:
+        condition: service_started
+    network_mode: host
+
+  keycloak:
+    profiles: ["browser-e2e"]
+    build:
+      context: ../..
+      dockerfile: dev/oidc4ac-lab/keycloak.Dockerfile
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${OIDC4AC_LAB_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${OIDC4AC_LAB_ADMIN_PASSWORD:-admin}
+      KC_LOG_LEVEL: ${OIDC4AC_LAB_KC_LOG_LEVEL:-INFO}
+    command:
+      - start-dev
+      - --features=oidc4ac:v1,admin-fine-grained-authz:v2
+      - --import-realm
+      - --http-host=0.0.0.0
+      - --http-port=8186
+      - --hostname=http://localhost:8186
+      - --hostname-strict=false
+    network_mode: host
+
+  keycloak-disabled:
+    profiles: ["disabled-e2e"]
+    build:
+      context: ../..
+      dockerfile: dev/oidc4ac-lab/keycloak.Dockerfile
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${OIDC4AC_LAB_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${OIDC4AC_LAB_ADMIN_PASSWORD:-admin}
+      KC_LOG_LEVEL: ${OIDC4AC_LAB_KC_LOG_LEVEL:-INFO}
+    command:
+      - start-dev
+      - --import-realm
+      - --http-host=0.0.0.0
+      - --http-port=8187
+      - --hostname=http://localhost:8187
+      - --hostname-strict=false
+    network_mode: host
