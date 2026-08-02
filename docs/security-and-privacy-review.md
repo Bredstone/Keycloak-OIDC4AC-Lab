@@ -2,9 +2,11 @@
 
 ## Scope
 
-This review covers the experimental Keycloak implementation against the author
-decisions PD-001 through PD-010. It does not claim production hardening or
-multi-node/persistent-grant validation.
+This review covers the OIDC4AC support provided by the lab's Keycloak instance
+against the [OIDC4AC protocol](https://bredstone.github.io/oidc4ac/) from the
+[main source repository](https://github.com/Bredstone/oidc4ac) and the
+corresponding Keycloak behavior. This review does not claim production
+hardening or multi-node/persistent-grant validation.
 
 ## Data disclosure
 

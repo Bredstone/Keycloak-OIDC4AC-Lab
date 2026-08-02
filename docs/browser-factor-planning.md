@@ -1,5 +1,11 @@
 # OIDC4AC Dynamic Browser-Factor Planning
 
+The protocol reference for the behavior described here is the
+[OIDC4AC protocol](https://bredstone.github.io/oidc4ac/) from the
+[main source repository](https://github.com/Bredstone/oidc4ac).
+This document explains the Keycloak-specific planner and flow configuration;
+it is not a replacement for the protocol grammar or response representation.
+
 ## Status
 
 This is an experimental, opt-in browser-flow extension for
@@ -128,3 +134,16 @@ defaults can allow all, allow selected optional fields, or deny optional
 fields. An OIDC4AC tab on each OpenID Connect client provides an independent
 inherit/selected/none override, so administrators can set disclosure without
 typing client IDs or property paths.
+
+Configure the flow before editing disclosure policy:
+
+1. enable OIDC4AC in **Realm settings → General**;
+2. create or import the planner, factor container, and factor subflows in
+   **Authentication → Flows**;
+3. verify that Discovery advertises request support; and
+4. configure realm/client disclosure defaults in the OIDC4AC pages.
+
+The planner page reports whether the expected integration is present. It does
+not dynamically create a flow from an RP request, and a method is not
+available merely because an RP names its identifier: a configured subflow and
+an installed provider are both required.

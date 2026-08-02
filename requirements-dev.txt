@@ -1,2 +1,4 @@
 # Development-only checks for the lab repository.
 flake8==7.3.0
+# Used by the host-side feature-disabled regression.
+requests==2.32.3
