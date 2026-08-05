@@ -22,6 +22,22 @@ resolve_keycloak_repo() {
         return 0
     fi
 
+    # The SBSeg artifact branch carries the reviewed implementation as a
+    # pinned submodule. Prefer it so a clean evaluator checkout uses exactly
+    # the reviewed source instead of downloading a moving branch.
+    checkout="$lab_dir/keycloak-oidc4ac"
+    if [[ -e "$checkout" ]]; then
+        if [[ ! -x "$checkout/mvnw" ]]; then
+            echo "The Keycloak submodule is not initialized: $checkout" >&2
+            echo "Run 'git submodule update --init --recursive' and try again." >&2
+            return 1
+        fi
+        KEYCLOAK_REPO=$(CDPATH= cd -- "$checkout" && pwd)
+        export KEYCLOAK_REPO
+        echo "Using bundled Keycloak source $(git -C "$checkout" rev-parse --short HEAD)" >&2
+        return 0
+    fi
+
     command -v git >/dev/null 2>&1 || {
         echo "git is required to download the Keycloak implementation checkout." >&2
         return 1
@@ -37,11 +53,15 @@ resolve_keycloak_repo() {
     fi
 
     local url=${OIDC4AC_LAB_KEYCLOAK_REPO_URL:-https://github.com/Bredstone/keycloak-OIDC4AC.git}
-    local ref=${OIDC4AC_LAB_KEYCLOAK_REF:-oidc4ac-implementation}
+    local ref=${OIDC4AC_LAB_KEYCLOAK_REF:-ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc}
 
     if [[ ! -e "$checkout" ]]; then
         echo "Downloading Keycloak implementation from $url ($ref)..." >&2
-        if [[ -n "$ref" ]]; then
+        if [[ "$ref" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            git clone --depth 1 "$url" "$checkout"
+            git -C "$checkout" fetch --prune --depth 1 origin "$ref"
+            git -C "$checkout" reset --hard FETCH_HEAD >/dev/null
+        elif [[ -n "$ref" ]]; then
             git clone --depth 1 --branch "$ref" "$url" "$checkout"
         else
             git clone --depth 1 "$url" "$checkout"

@@ -24,8 +24,9 @@ local checkout, or set `OIDC4AC_LAB_KEYCLOAK_REPO_URL` and
 ## Ports and stale processes
 
 **Address already in use.** Run `./dev.sh status` and `./dev.sh down`. The
-default `run` command cleans running Docker containers and a Keycloak process
-on its configured port; `--no-kill` intentionally does not. Choose a different
+default `run` command cleans this lab's Compose services and a Keycloak process
+on its configured port; `--no-kill` intentionally does not stop existing
+services or processes. Choose a different
 `OIDC4AC_LAB_HTTP_PORT`/`OIDC4AC_LAB_CLIENT_PORT` when another application must
 remain online.
 

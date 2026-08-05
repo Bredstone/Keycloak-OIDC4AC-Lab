@@ -62,7 +62,7 @@ echo "Administration: $KC_BOOTSTRAP_ADMIN_USERNAME / (the configured local passw
 exec "$KEYCLOAK_HOME/bin/kc.sh" start-dev \
     --features=oidc4ac:v1,admin-fine-grained-authz:v2 \
     --import-realm \
-    --http-host=0.0.0.0 \
+    --http-host=127.0.0.1 \
     --http-port="$HTTP_PORT" \
     --hostname="http://keycloak.localhost:$HTTP_PORT" \
     --hostname-strict=false

@@ -1,0 +1,4 @@
+[submodule "keycloak-oidc4ac"]
+	path = keycloak-oidc4ac
+	url = https://github.com/Bredstone/keycloak-OIDC4AC.git
+	branch = oidc4ac-implementation

@@ -144,8 +144,8 @@ build_keycloak() {
         # host build may have left it pointing at an absolute host path.
         rm -rf js/themes-vendor/target js/node_modules js/node/node_modules
         rm -f js/node/pnpm
-        ./mvnw clean -pl quarkus/dist -am -DskipTests
-        ./mvnw -pl quarkus/dist -am -DskipTests package
+        ./mvnw clean -pl quarkus/dist -am -Dmaven.test.skip=true
+        ./mvnw -pl quarkus/dist -am -Dmaven.test.skip=true package
     '
 
     local archive="$KEYCLOAK_REPO/quarkus/dist/target/keycloak-26.7.0.tar.gz"
@@ -234,8 +234,8 @@ clean_docker_services() {
         return 0
     fi
 
-    echo "Stopping running Docker containers before the lab starts..."
-    mapfile -t running_containers < <(docker ps -q)
+    echo "Stopping this lab's Docker containers before it starts..."
+    mapfile -t running_containers < <(compose_all_profiles ps -q --all)
     for container in "${running_containers[@]}"; do
         docker stop "$container" >/dev/null || true
     done
@@ -375,10 +375,10 @@ help() {
     cat <<'EOF'
 Usage: ./dev.sh [command]
 
-Without a command, stops running Docker containers, cleans up this lab's Compose services, and starts the lab (`run`).
+Without a command, stops this lab's Compose services, cleans up its generated state, and starts the lab (`run`).
 
 Lifecycle:
-  run              Stop running containers, clean this lab's services, then start with logs attached
+  run              Stop this lab's Compose services, then start with logs attached
   down             Stop Keycloak and Compose services
   status           Show source, process, and Compose status
   logs             Show recent Keycloak and test-client logs

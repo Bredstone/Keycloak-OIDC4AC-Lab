@@ -4,8 +4,8 @@ services:
   smtp4dev:
     image: rnwood/smtp4dev:v3
     ports:
-      - "${OIDC4AC_LAB_SMTP_PORT:-2525}:25"
-      - "${OIDC4AC_LAB_SMTP_WEB_PORT:-5080}:80"
+      - "127.0.0.1:${OIDC4AC_LAB_SMTP_PORT:-2525}:25"
+      - "127.0.0.1:${OIDC4AC_LAB_SMTP_WEB_PORT:-5080}:80"
 
   test-client:
     build:
@@ -17,10 +17,11 @@ services:
       OIDC_CLIENT_SECRET: oidc4ac-lab-client-secret
       FLASK_SECRET_KEY: ${OIDC4AC_LAB_FLASK_SECRET:-local-development-only-change-me}
       SMTP4DEV_URL: ${OIDC4AC_LAB_SMTP_WEB_URL:-http://localhost:5080}
+      PORT: "${OIDC4AC_LAB_CLIENT_PORT:-5000}"
+    network_mode: host
     extra_hosts:
-      - keycloak.localhost:host-gateway
-    ports:
-      - "${OIDC4AC_LAB_CLIENT_PORT:-5000}:5000"
+      - keycloak.localhost:127.0.0.1
+      - client.localhost:127.0.0.1
 
   e2e:
     profiles: ["e2e"]
@@ -30,15 +31,16 @@ services:
     environment:
       OIDC4AC_E2E_CLIENT_URL: http://client.localhost:${OIDC4AC_LAB_CLIENT_PORT:-5000}
       OIDC4AC_E2E_ISSUER: ${OIDC4AC_LAB_ISSUER:-http://keycloak.localhost:8080/realms/oidc4ac}
-      OIDC4AC_E2E_SMTP4DEV_URL: http://smtp4dev
+      OIDC4AC_E2E_SMTP4DEV_URL: ${OIDC4AC_LAB_SMTP_WEB_URL:-http://localhost:5080}
     depends_on:
       test-client:
         condition: service_started
       smtp4dev:
         condition: service_started
+    network_mode: host
     extra_hosts:
-      - client.localhost:host-gateway
-      - keycloak.localhost:host-gateway
+      - client.localhost:127.0.0.1
+      - keycloak.localhost:127.0.0.1
 
   browser-e2e:
     profiles: ["browser-e2e"]
@@ -88,7 +90,7 @@ services:
       - start-dev
       - --features=oidc4ac:v1,admin-fine-grained-authz:v2
       - --import-realm
-      - --http-host=0.0.0.0
+      - --http-host=127.0.0.1
       - --http-port=8186
       - --hostname=http://localhost:8186
       - --hostname-strict=false
@@ -106,7 +108,7 @@ services:
     command:
       - start-dev
       - --import-realm
-      - --http-host=0.0.0.0
+      - --http-host=127.0.0.1
       - --http-port=8187
       - --hostname=http://localhost:8187
       - --hostname-strict=false

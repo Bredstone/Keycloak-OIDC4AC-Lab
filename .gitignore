@@ -5,3 +5,4 @@
 *.jar
 __pycache__/
 *.py[cod]
+sbseg2026-oidc4ac-artifact/

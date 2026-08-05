@@ -22,11 +22,23 @@ resolve `*.localhost` to loopback.
 
 ## Source and build variables
 
-The default source helper fetches:
+The artifact branch includes the reviewed Keycloak implementation as the
+`keycloak-oidc4ac` submodule. Initialize it after cloning:
+
+```bash
+git submodule update --init --recursive
+```
+
+The submodule is pinned to the reviewed commit on the
+`oidc4ac-implementation` branch. The source helper uses it automatically.
+When working on another implementation, set `OIDC4AC_LAB_KEYCLOAK_REPO` to a
+different checkout before running `./dev.sh build`.
+
+For fallback checkouts, the source helper fetches:
 
 ```text
 Repository: https://github.com/Bredstone/keycloak-OIDC4AC.git
-Ref:        oidc4ac-implementation
+Ref:        ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc
 Checkout:   .runtime/keycloak-source
 ```
 
@@ -56,6 +68,10 @@ working copy only when you are intentionally testing that source.
 
 Use `./dev.sh run --no-kill` to preserve unrelated containers and a running
 Keycloak process. It is a command-line option, not an environment variable.
+
+The regular client and end-to-end profiles use Docker host networking so the
+local services can bind to loopback without exposing published ports. Use a
+Docker runtime that supports host networking for these profiles.
 
 If a port is occupied, use `./dev.sh status`, stop the old lab with
 `./dev.sh down`, or choose a different regular-run port. The browser and
