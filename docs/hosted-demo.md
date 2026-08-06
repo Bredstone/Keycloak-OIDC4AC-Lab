@@ -34,6 +34,9 @@ docker compose --env-file deploy/demo/demo.env \
   -f deploy/demo/docker-compose.yml up -d --build
 ```
 
+The realm preparation command must complete before `docker compose up`; it
+creates the file mounted into the Keycloak container.
+
 The Keycloak image is built from the reviewed distribution and example SPI
 already prepared by `./dev.sh build` and `./dev.sh provider-build`.
 

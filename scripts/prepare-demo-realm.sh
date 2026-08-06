@@ -23,6 +23,12 @@ set +a
 
 : "${OIDC4AC_DEMO_CLIENT_URL:?Missing OIDC4AC_DEMO_CLIENT_URL}"
 
+if [[ -d "$OUTPUT_FILE" ]]; then
+    echo "Realm output path is a directory: $OUTPUT_FILE" >&2
+    echo "Remove that empty Docker-created directory and run this script again." >&2
+    exit 1
+fi
+
 mkdir -p "$(dirname -- "$OUTPUT_FILE")"
 jq \
     --arg client_url "${OIDC4AC_DEMO_CLIENT_URL%/}" \
