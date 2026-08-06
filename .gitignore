@@ -1,6 +1,7 @@
 .runtime/
 .build/
 .env
+deploy/demo/demo.env
 **/target/
 *.jar
 __pycache__/

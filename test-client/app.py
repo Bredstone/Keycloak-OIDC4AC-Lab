@@ -38,6 +38,10 @@ CLIENT_ID = os.environ.get("OIDC_CLIENT_ID", "oidc4ac-test-client")
 CLIENT_SECRET = os.environ.get("OIDC_CLIENT_SECRET", "oidc4ac-lab-client-secret")
 SMTP4DEV_URL = os.environ.get("SMTP4DEV_URL", "http://localhost:5080")
 TOTP_SECRET = os.environ.get("OIDC4AC_TOTP_SECRET", "DJmQfC73VGFhw7D4QJ8A")
+# A hosted demo terminates TLS in a reverse proxy while this Flask process
+# remains on a private loopback port. When set, use the public URL explicitly
+# for the OAuth callback instead of deriving it from the internal request.
+PUBLIC_URL = os.environ.get("OIDC4AC_PUBLIC_URL", "").rstrip("/")
 
 # These caches deliberately only live for the lifetime of this disposable lab
 # process. Keeping the full request server-side also keeps experimental raw
@@ -133,6 +137,7 @@ def home_response(raw_claims: str | None = None, error: str | None = None, statu
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "local-development-only-change-me")
+    app.config["SESSION_COOKIE_SECURE"] = os.environ.get("OIDC4AC_PUBLIC_HTTPS", "false").lower() == "true"
     oauth = OAuth(app)
     oauth.register(
         name="keycloak",
@@ -210,7 +215,8 @@ def create_app() -> Flask:
             parameters["claims"] = json.dumps(claims, separators=(",", ":"))
         if request.form.get("prompt_login") == "on":
             parameters["prompt"] = "login"
-        return oauth.keycloak.authorize_redirect(url_for("callback", _external=True), **parameters)
+        callback_url = f"{PUBLIC_URL}/callback" if PUBLIC_URL else url_for("callback", _external=True)
+        return oauth.keycloak.authorize_redirect(callback_url, **parameters)
 
     @app.get("/callback")
     def callback() -> tuple[str, int] | str:

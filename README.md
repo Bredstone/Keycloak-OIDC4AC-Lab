@@ -115,6 +115,13 @@ The default test credentials are `alice / Alice-password-123` and
 `admin / admin`. They are disposable credentials and must not be reused
 outside this artifact.
 
+## Optional hosted demonstration
+
+Reviewers may use the [hosted demonstration guide](docs/hosted-demo.md) to
+publish a disposable VM-backed instance with HTTPS. The hosted instance is a
+convenience for interactive review; the repository and local claim commands
+remain the authoritative, reproducible artifact.
+
 ## Dependencies
 
 The main versions used by this artifact are:

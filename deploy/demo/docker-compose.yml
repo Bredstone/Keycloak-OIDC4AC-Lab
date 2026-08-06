@@ -1,0 +1,58 @@
+name: oidc4ac-reviewer-demo
+
+services:
+  smtp4dev:
+    image: rnwood/smtp4dev:v3
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${OIDC4AC_DEMO_SMTP_PORT:-2525}:25"
+      - "127.0.0.1:${OIDC4AC_DEMO_SMTP_WEB_PORT:-5080}:80"
+
+  keycloak:
+    build:
+      context: ../..
+      dockerfile: keycloak/Dockerfile
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${OIDC4AC_DEMO_ADMIN_USERNAME:?Set OIDC4AC_DEMO_ADMIN_USERNAME in demo.env}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${OIDC4AC_DEMO_ADMIN_PASSWORD:?Set OIDC4AC_DEMO_ADMIN_PASSWORD in demo.env}
+      KC_LOG_LEVEL: ${OIDC4AC_DEMO_KC_LOG_LEVEL:-INFO}
+    depends_on:
+      smtp4dev:
+        condition: service_started
+    command:
+      - start-dev
+      - --features=oidc4ac:v1,admin-fine-grained-authz:v2
+      - --import-realm
+      - --http-host=127.0.0.1
+      - --http-port=${OIDC4AC_DEMO_KEYCLOAK_PORT:-8080}
+      - --hostname=${OIDC4AC_DEMO_KEYCLOAK_URL:?Set OIDC4AC_DEMO_KEYCLOAK_URL in demo.env}
+      - --proxy-headers=xforwarded
+      - --hostname-strict=false
+    volumes:
+      - ../../.runtime/demo/realm-import.json:/opt/keycloak/data/import/oidc4ac-realm.json:ro
+      - keycloak-demo-data:/opt/keycloak/data/h2
+
+  test-client:
+    build:
+      context: ../../test-client
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      OIDC_ISSUER: ${OIDC4AC_DEMO_KEYCLOAK_URL:?Set OIDC4AC_DEMO_KEYCLOAK_URL in demo.env}/realms/oidc4ac
+      OIDC_CLIENT_ID: oidc4ac-test-client
+      OIDC_CLIENT_SECRET: oidc4ac-lab-client-secret
+      OIDC4AC_PUBLIC_URL: ${OIDC4AC_DEMO_CLIENT_URL:?Set OIDC4AC_DEMO_CLIENT_URL in demo.env}
+      OIDC4AC_PUBLIC_HTTPS: "true"
+      OIDC4AC_CLIENT_BIND_HOST: 127.0.0.1
+      FLASK_SECRET_KEY: ${OIDC4AC_DEMO_FLASK_SECRET:?Set OIDC4AC_DEMO_FLASK_SECRET in demo.env}
+      SMTP4DEV_URL: ${OIDC4AC_DEMO_MAIL_URL:?Set OIDC4AC_DEMO_MAIL_URL in demo.env}
+      PORT: ${OIDC4AC_DEMO_CLIENT_PORT:-5000}
+    depends_on:
+      keycloak:
+        condition: service_started
+
+volumes:
+  keycloak-demo-data:

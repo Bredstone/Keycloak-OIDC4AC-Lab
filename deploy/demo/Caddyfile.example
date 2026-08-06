@@ -1,0 +1,19 @@
+# Caddy obtains and renews the public Let's Encrypt certificates automatically.
+# Keep the three DuckDNS names in sync with demo.env.
+
+oidc4ac-keycloak.duckdns.org {
+    reverse_proxy 127.0.0.1:8080
+}
+
+oidc4ac-client.duckdns.org {
+    reverse_proxy 127.0.0.1:5000
+}
+
+# smtp4dev contains only disposable demo mail. Add basic_auth before publishing
+# this host. Generate a hash with: caddy hash-password --plaintext '...'
+oidc4ac-mail.duckdns.org {
+    # basic_auth {
+    #     reviewer REPLACE_WITH_BCRYPT_HASH
+    # }
+    reverse_proxy 127.0.0.1:5080
+}
