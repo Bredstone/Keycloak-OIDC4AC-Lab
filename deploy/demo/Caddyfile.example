@@ -9,11 +9,11 @@ oidc4ac-client.duckdns.org {
     reverse_proxy 127.0.0.1:5000
 }
 
-# smtp4dev contains only disposable demo mail. Add basic_auth before publishing
-# this host. Generate a hash with: caddy hash-password --plaintext '...'
+# smtp4dev contains only disposable demo mail. The credentials are intentionally
+# public and documented in the README because this is a disposable reviewer demo.
 oidc4ac-mail.duckdns.org {
-    # basic_auth {
-    #     reviewer REPLACE_WITH_BCRYPT_HASH
-    # }
+    basic_auth {
+        reviewer $2a$12$UJLXyTEEcVaBU.vX2E2WzOsoubDCLW7q7ORicrfhUJ5lfxSqYC8NS
+    }
     reverse_proxy 127.0.0.1:5080
 }

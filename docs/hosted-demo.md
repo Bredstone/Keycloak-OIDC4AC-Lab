@@ -28,7 +28,7 @@ DuckDNS names differ.
 ```bash
 cp deploy/demo/demo.env.example deploy/demo/demo.env
 chmod 600 deploy/demo/demo.env
-# Edit demo.env and replace both CHANGE_ME values.
+# Edit demo.env and set the private OIDC4AC_DEMO_FLASK_SECRET value.
 ./scripts/prepare-demo-realm.sh
 docker compose --env-file deploy/demo/demo.env \
   -f deploy/demo/docker-compose.yml up -d --build
@@ -56,11 +56,12 @@ sudo apt-get install -y caddy
 sudo cp deploy/demo/Caddyfile.example /etc/caddy/Caddyfile
 ```
 
-Before starting Caddy, edit the `oidc4ac-mail.duckdns.org` block and enable
-`basic_auth`. Generate the password hash with
-`caddy hash-password --plaintext 'a-disposable-password'` and replace
-`REPLACE_WITH_BCRYPT_HASH` in the block. This protects the disposable inbox
-from unauthenticated Internet access.
+The example already protects `oidc4ac-mail.duckdns.org` with basic
+authentication using the public disposable inbox credentials in the README.
+If you rotate that password, generate a new bcrypt hash with
+`caddy hash-password --plaintext 'a-disposable-password'` and replace the hash
+in the Caddyfile. This protects the disposable inbox from unauthenticated
+Internet access.
 
 Validate and start Caddy:
 

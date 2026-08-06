@@ -122,6 +122,17 @@ publish a disposable VM-backed instance with HTTPS. The hosted instance is a
 convenience for interactive review; the repository and local claim commands
 remain the authoritative, reproducible artifact.
 
+The hosted demo intentionally uses public, disposable credentials:
+
+| Service | Username | Password |
+| --- | --- | --- |
+| Keycloak administrator | `oidc4ac-demo-admin` | `O4AC-3500b25109a07bf339344f1c03f2e83b` |
+| smtp4dev inbox | `reviewer` | `Mail-08fda6827446f552b19931fa44650f16` |
+
+The test user remains `alice / Alice-password-123`. These credentials are only
+for this demo and must not be reused. The Flask session secret is deliberately
+not public; set `OIDC4AC_DEMO_FLASK_SECRET` privately on the VM.
+
 ## Dependencies
 
 The main versions used by this artifact are:
