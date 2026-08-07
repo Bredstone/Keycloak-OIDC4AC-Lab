@@ -10,6 +10,7 @@ Docker workflow remains the reproducible reference for the artifact.
 | --- | --- | --- |
 | Test client | <https://oidc4ac-client.duckdns.org> | Compose OIDC4AC requests |
 | Keycloak | <https://oidc4ac-keycloak.duckdns.org> | OIDC provider and Account Console |
+| Keycloak Admin Console | <https://oidc4ac-keycloak.duckdns.org/admin/oidc4ac/console/> | Inspect the hosted `oidc4ac` realm |
 | Email inbox | <https://oidc4ac-mail.duckdns.org> | Inspect disposable verification messages |
 
 The hosted instance uses these disposable credentials:
@@ -22,6 +23,19 @@ The hosted instance uses these disposable credentials:
 The administration account can inspect the `oidc4ac` realm and its
 authentication flows. It cannot modify users, clients, or flows. The email
 inbox requires no login and contains only disposable test messages.
+
+## Sign in to the Admin Console
+
+To inspect the configured realm and authentication flows:
+
+1. Open the [Keycloak Admin Console](https://oidc4ac-keycloak.duckdns.org/admin/oidc4ac/console/).
+2. Sign in with the **Realm administration (read-only)** credentials above.
+3. Confirm that the realm selector shows `oidc4ac`.
+4. Open **Authentication → Flows** to inspect the OIDC4AC browser flow.
+
+The direct URL selects the `oidc4ac` realm. This account is not the private
+master-realm bootstrap administrator and cannot manage the Keycloak server or
+other realms.
 
 ## Try a request
 

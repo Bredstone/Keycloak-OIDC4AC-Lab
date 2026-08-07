@@ -45,6 +45,7 @@ distribution or a protocol-conformance certification.
 <p align="center">
   <a href="https://oidc4ac-client.duckdns.org">Test client</a> ·
   <a href="https://oidc4ac-keycloak.duckdns.org">Keycloak</a> ·
+  <a href="https://oidc4ac-keycloak.duckdns.org/admin/oidc4ac/console/">Admin Console</a> ·
   <a href="https://oidc4ac-mail.duckdns.org">Email inbox</a> ·
   <a href="docs/hosted-instance.md">Usage guide</a>
 </p>
@@ -132,6 +133,10 @@ The default test credentials are `alice / Alice-password-123` and
 `admin / admin`. They are disposable credentials and must not be reused
 outside this artifact.
 
+To inspect the local Keycloak configuration, open
+<http://keycloak.localhost:8080/admin/> and sign in with `admin / admin`.
+Select the `oidc4ac` realm, then open **Authentication → Flows**.
+
 ## Optional public hosted instance
 
 Anyone can use the hosted instance to try the running implementation without
@@ -151,6 +156,12 @@ reused. The administrator account is scoped to the `oidc4ac` realm and has the
 read-only `view-realm` role, which is sufficient to inspect the configured
 authentication flows but cannot edit users, clients, or flows. The smtp4dev
 inbox is intentionally public and contains only disposable messages.
+
+To inspect the hosted configuration, open the [Keycloak Admin
+Console](https://oidc4ac-keycloak.duckdns.org/admin/oidc4ac/console/), sign in
+with the realm administrator credentials above, and open **Authentication →
+Flows**. The URL selects the `oidc4ac` realm; it is not the private master-realm
+bootstrap account.
 
 ## Dependencies
 
