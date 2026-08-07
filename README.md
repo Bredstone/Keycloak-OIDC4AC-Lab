@@ -160,9 +160,10 @@ The main versions used by this artifact are:
 | --- | --- |
 | Keycloak implementation | `keycloak-oidc4ac` submodule at the pinned review commit |
 | Keycloak distribution | 26.7.0 |
-| Maven builder | `maven:3.9-eclipse-temurin-21` |
-| Python test/client images | versions pinned in their Dockerfiles and requirements files |
-| Email sink | `rnwood/smtp4dev:v3` |
+| Maven builder | `maven:3.9-eclipse-temurin-21` pinned by digest in `dev.sh` and `scripts/lint.sh` |
+| Python test/client images | `python:3.13.3-slim-bookworm` pinned by digest in their Dockerfiles |
+| Email sink | `rnwood/smtp4dev:v3` pinned by digest in both Compose files |
+| Browser test image | `mcr.microsoft.com/playwright/python:v1.60.0-noble` pinned by digest |
 | Browser test | Chromium with a virtual CTAP2/WebAuthn authenticator |
 
 The test client and end-to-end Python dependencies are declared in
@@ -245,8 +246,6 @@ For a manual functional check:
 5. Try the **Password and OTP (all_of)** preset and open the test client's
    **Factor tools** page to read/copy the current code from the OTP helper.
 
-<!-- Screenshot placeholder: replace docs/images/test-client-workbench.png with a
-     current workbench capture showing the Factor tools link in the header. -->
 ![OIDC4AC test-client workbench](docs/images/test-client-workbench.png)
 
 Stop the environment with:
@@ -346,7 +345,7 @@ under 5 minutes after dependencies are cached. Host lint dependencies must be
 installed with `python3 -m pip install -r requirements-dev.txt`.
 
 **Expected result:** Compose, Python, shell, realm JSON, provider XML, and
-provider formatting checks pass, and `status` reports the selected bundled
+provider formatting checks pass, and `status` reports the selected staged
 Keycloak source and local services.
 
 ## LICENSE

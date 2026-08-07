@@ -42,7 +42,6 @@ The planner selects only existing subflows. Naming `email` in a request is
 therefore not enough: the provider must be installed and the
 `oidc4ac:email` subflow must be configured in the browser flow.
 
-<!-- Screenshot placeholder: add docs/images/keycloak-browser-flow.png. -->
 ![OIDC4AC browser flow in the Keycloak Admin Console](images/keycloak-browser-flow.png)
 
 ## Configure your own instance
@@ -62,10 +61,8 @@ items automatically. In a real deployment, also define the realm disclosure
 policy and, when necessary, an override per client. They determine which
 optional metadata and properties can be sent to each RP.
 
-<!-- Screenshot placeholder: add docs/images/keycloak-oidc4ac-settings.png. -->
 ![OIDC4AC realm settings in the Keycloak Admin Console](images/keycloak-oidc4ac-settings.png)
 
-<!-- Screenshot placeholder: add docs/images/keycloak-disclosure-policy.png. -->
 ![OIDC4AC disclosure policy in the Keycloak Admin Console](images/keycloak-disclosure-policy.png)
 
 [Browser factor planning](browser-factor-planning.md) explains the flow

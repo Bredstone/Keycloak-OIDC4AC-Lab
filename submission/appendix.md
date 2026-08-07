@@ -59,7 +59,9 @@ git submodule update --init --recursive
 
 If the initial smoke check succeeds, the claim commands in the root README can
 be run independently. Generated state is confined to ignored `.runtime/`,
-`.build/`, and `target/` directories.
+`.build/`, and `target/` directories. The build stages the pinned Keycloak
+submodule into `.runtime/keycloak-source`; it never builds in the tracked
+submodule worktree. Default Docker base images are pinned by manifest digest.
 
 ## Claim-to-evidence map
 

@@ -15,7 +15,7 @@ KEYCLOAK_ARCHIVE="$BUILD_DIR/keycloak-26.7.0.tar.gz"
 ISSUER="${OIDC4AC_LAB_ISSUER:-http://keycloak.localhost:8080/realms/oidc4ac}"
 CLIENT_URL="${OIDC4AC_LAB_CLIENT_URL:-http://client.localhost:${OIDC4AC_LAB_CLIENT_PORT:-5000}}"
 SMTP4DEV_WEB_URL="${OIDC4AC_LAB_SMTP_WEB_URL:-http://localhost:${OIDC4AC_LAB_SMTP_WEB_PORT:-5080}}"
-BUILDER_IMAGE="${OIDC4AC_LAB_BUILDER_IMAGE:-maven:3.9-eclipse-temurin-21}"
+BUILDER_IMAGE="${OIDC4AC_LAB_BUILDER_IMAGE:-maven:3.9-eclipse-temurin-21@sha256:c07f7ccfb8ca6c9fa29ee523f00afa7d2ca6132c92f8652c4aebb5ee3491f502}"
 KILL_ENVIRONMENT=true
 
 compose() {
@@ -58,6 +58,12 @@ run_maven_container() {
 
 ensure_keycloak_repo() {
     resolve_keycloak_repo "$ROOT_DIR" || die "unable to prepare the Keycloak implementation checkout"
+}
+
+clean_managed_keycloak_repo() {
+    [[ "${KEYCLOAK_REPO_MANAGED:-false}" == true ]] || return 0
+    git -C "$KEYCLOAK_REPO" reset --hard HEAD >/dev/null
+    git -C "$KEYCLOAK_REPO" clean -fdx >/dev/null
 }
 
 pid_is_running() {
@@ -135,6 +141,7 @@ wait_for_url() {
 build_keycloak() {
     ensure_keycloak_repo
     [[ -x "$KEYCLOAK_REPO/mvnw" ]] || die "Keycloak checkout not found or mvnw is not executable: $KEYCLOAK_REPO"
+    clean_managed_keycloak_repo
     mkdir -p "$BUILD_DIR"
     echo "Building Keycloak distribution in Docker from $KEYCLOAK_REPO..."
     run_maven_container bash -lc '
@@ -151,12 +158,14 @@ build_keycloak() {
     local archive="$KEYCLOAK_REPO/quarkus/dist/target/keycloak-26.7.0.tar.gz"
     [[ -f "$archive" ]] || die "Keycloak distribution not found: $archive"
     cp "$archive" "$KEYCLOAK_ARCHIVE"
+    clean_managed_keycloak_repo
     echo "Prepared $KEYCLOAK_ARCHIVE"
 }
 
 build_provider() {
     ensure_keycloak_repo
     [[ -x "$KEYCLOAK_REPO/mvnw" ]] || die "Keycloak checkout not found or mvnw is not executable: $KEYCLOAK_REPO"
+    clean_managed_keycloak_repo
     echo "Building the optional email provider in Docker..."
     run_maven_container bash -lc '
         set -euo pipefail
@@ -166,6 +175,7 @@ build_provider() {
         cd /workspace
         /keycloak-source/mvnw -f providers/oidc4ac-test-email/pom.xml -DskipTests clean package
     '
+    clean_managed_keycloak_repo
     echo "Prepared $PROVIDER_DIR/target/oidc4ac-test-email-1.0.0-SNAPSHOT.jar"
 }
 
@@ -401,8 +411,9 @@ Other:
   --no-kill         Preserve running containers and existing Keycloak processes before startup
   help              Show this help
 
-The wrapper shallow-clones or refreshes the fork into ignored
-.runtime/keycloak-source on every build.
+The wrapper stages the pinned submodule into the ignored
+.runtime/keycloak-source checkout before building. Build-generated changes are
+cleaned there and never written back to the tracked submodule.
 Override the source checkout with OIDC4AC_LAB_KEYCLOAK_REPO, or override the
 download with OIDC4AC_LAB_KEYCLOAK_REPO_URL and OIDC4AC_LAB_KEYCLOAK_REF.
 EOF

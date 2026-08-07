@@ -3,6 +3,49 @@
 # Resolve the Keycloak implementation used by the lab. The caller must define
 # ROOT_DIR and may provide a die() function for user-facing failures.
 
+KEYCLOAK_REPO_MANAGED=${KEYCLOAK_REPO_MANAGED:-false}
+
+stage_bundled_keycloak_repo() {
+    local lab_dir=$1
+    local source="$lab_dir/keycloak-oidc4ac"
+    local checkout="$lab_dir/.runtime/keycloak-source"
+    local source_commit current_commit
+
+    source_commit=$(git -C "$source" rev-parse HEAD) || {
+        echo "Unable to read the bundled Keycloak submodule commit: $source" >&2
+        return 1
+    }
+
+    if [[ -d "$checkout/.git" && -x "$checkout/mvnw" ]]; then
+        current_commit=$(git -C "$checkout" rev-parse HEAD 2>/dev/null || true)
+        if [[ "$current_commit" == "$source_commit" ]]; then
+            KEYCLOAK_REPO=$(CDPATH= cd -- "$checkout" && pwd)
+            KEYCLOAK_REPO_MANAGED=true
+            export KEYCLOAK_REPO KEYCLOAK_REPO_MANAGED
+            echo "Using staged Keycloak source $(git -C "$checkout" rev-parse --short HEAD)" >&2
+            return 0
+        fi
+    fi
+
+    mkdir -p "$(dirname -- "$checkout")"
+    if [[ -e "$checkout" ]]; then
+        echo "Refreshing the staged Keycloak source checkout..." >&2
+        rm -rf -- "$checkout"
+    fi
+
+    # A local clone copies the committed submodule state into generated
+    # runtime space. Keycloak's Maven/frontend build may modify tracked files;
+    # keeping that worktree outside the submodule preserves the pinned source.
+    git clone --local --no-hardlinks "$source" "$checkout" >/dev/null
+    git -C "$checkout" checkout --detach "$source_commit" >/dev/null
+    git -C "$checkout" clean -fdx >/dev/null
+
+    KEYCLOAK_REPO=$(CDPATH= cd -- "$checkout" && pwd)
+    KEYCLOAK_REPO_MANAGED=true
+    export KEYCLOAK_REPO KEYCLOAK_REPO_MANAGED
+    echo "Using staged Keycloak source $(git -C "$checkout" rev-parse --short HEAD)" >&2
+}
+
 resolve_keycloak_repo() {
     local lab_dir=$1
     local configured=${OIDC4AC_LAB_KEYCLOAK_REPO:-}
@@ -18,13 +61,14 @@ resolve_keycloak_repo() {
             return 1
         fi
         KEYCLOAK_REPO=$(CDPATH= cd -- "$checkout" && pwd)
-        export KEYCLOAK_REPO
+        KEYCLOAK_REPO_MANAGED=false
+        export KEYCLOAK_REPO KEYCLOAK_REPO_MANAGED
         return 0
     fi
 
     # The SBSeg artifact branch carries the reviewed implementation as a
-    # pinned submodule. Prefer it so a clean evaluator checkout uses exactly
-    # the reviewed source instead of downloading a moving branch.
+    # pinned submodule. Stage it into ignored runtime space so the Keycloak
+    # build cannot modify the submodule's tracked files.
     checkout="$lab_dir/keycloak-oidc4ac"
     if [[ -e "$checkout" ]]; then
         if [[ ! -x "$checkout/mvnw" ]]; then
@@ -32,10 +76,8 @@ resolve_keycloak_repo() {
             echo "Run 'git submodule update --init --recursive' and try again." >&2
             return 1
         fi
-        KEYCLOAK_REPO=$(CDPATH= cd -- "$checkout" && pwd)
-        export KEYCLOAK_REPO
-        echo "Using bundled Keycloak source $(git -C "$checkout" rev-parse --short HEAD)" >&2
-        return 0
+        stage_bundled_keycloak_repo "$lab_dir"
+        return $?
     fi
 
     command -v git >/dev/null 2>&1 || {
@@ -95,6 +137,7 @@ resolve_keycloak_repo() {
     fi
 
     KEYCLOAK_REPO=$(CDPATH= cd -- "$checkout" && pwd)
-    export KEYCLOAK_REPO
+    KEYCLOAK_REPO_MANAGED=true
+    export KEYCLOAK_REPO KEYCLOAK_REPO_MANAGED
     echo "Using Keycloak source $(git -C "$checkout" rev-parse --short HEAD)" >&2
 }

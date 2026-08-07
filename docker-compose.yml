@@ -2,7 +2,7 @@ name: oidc4ac-native-lab
 
 services:
   smtp4dev:
-    image: rnwood/smtp4dev:v3
+    image: rnwood/smtp4dev:v3@sha256:25c434c1900a9c5b61e17ead0a774d9e81b80554d05cf64719d69e5ea8c66537
     ports:
       - "127.0.0.1:${OIDC4AC_LAB_SMTP_PORT:-2525}:25"
       - "127.0.0.1:${OIDC4AC_LAB_SMTP_WEB_PORT:-5080}:80"

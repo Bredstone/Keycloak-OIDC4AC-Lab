@@ -30,7 +30,9 @@ git submodule update --init --recursive
 ```
 
 The submodule is pinned to the reviewed commit on the
-`oidc4ac-implementation` branch. The source helper uses it automatically.
+`oidc4ac-implementation` branch. The source helper stages it into the ignored
+`.runtime/keycloak-source` checkout automatically, so the Keycloak build cannot
+modify the tracked submodule.
 When working on another implementation, set `OIDC4AC_LAB_KEYCLOAK_REPO` to a
 different checkout before running `./dev.sh build`.
 
@@ -49,12 +51,13 @@ For local development, set one of these before `./dev.sh build`:
 | `OIDC4AC_LAB_KEYCLOAK_REPO` | Existing local Keycloak checkout; avoids cloning |
 | `OIDC4AC_LAB_KEYCLOAK_REPO_URL` | Remote repository to clone/fetch |
 | `OIDC4AC_LAB_KEYCLOAK_REF` | Branch, tag, or ref to build |
-| `OIDC4AC_LAB_BUILDER_IMAGE` | Maven builder image override |
+| `OIDC4AC_LAB_BUILDER_IMAGE` | Maven builder image override (the default is digest-pinned) |
 
 The helper refreshes a managed generated checkout and may reset that generated
-directory to the selected ref. Do not point it at an uncommitted checkout
-unless you understand that behavior; use `OIDC4AC_LAB_KEYCLOAK_REPO` with a
-working copy only when you are intentionally testing that source.
+directory to the selected ref. The default bundled source is always staged
+outside the submodule. An explicit `OIDC4AC_LAB_KEYCLOAK_REPO` is used directly;
+point it at a disposable or intentionally mutable checkout when testing local
+changes.
 
 ## Ports and process variables
 

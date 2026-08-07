@@ -38,7 +38,7 @@ PY
 
 resolve_keycloak_repo "$ROOT_DIR" || die "unable to prepare the Keycloak implementation checkout"
 
-MAVEN_IMAGE="${OIDC4AC_LAB_BUILDER_IMAGE:-maven:3.9-eclipse-temurin-21}"
+MAVEN_IMAGE="${OIDC4AC_LAB_BUILDER_IMAGE:-maven:3.9-eclipse-temurin-21@sha256:c07f7ccfb8ca6c9fa29ee523f00afa7d2ca6132c92f8652c4aebb5ee3491f502}"
 mkdir -p "$ROOT_DIR/.runtime/maven-cache"
 docker run --rm \
     --user "$(id -u):$(id -g)" \
