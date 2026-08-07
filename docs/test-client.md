@@ -40,7 +40,7 @@ the examples:
 - **OTP helper** shows Alice's current six-digit code and has a copy button. It
   updates the code only when the 30-second period changes, so selecting or
   copying it is not interrupted by a page reload.
-- **Email inbox** opens the smtp4dev viewer. The hosted reviewer inbox is
+- **Email inbox** opens the smtp4dev viewer. The public hosted inbox is
   intentionally public and contains only disposable messages.
 - **WebAuthn / passkey** opens Alice's Keycloak Account Console. Sign in with
   `alice / Alice-password-123`, choose **Security** (or **Signing in**) and
@@ -50,19 +50,19 @@ the examples:
 
 The hosted service uses HTTPS, which is required by WebAuthn. Chrome, Edge,
 Firefox, and Safari can use a platform passkey, a phone, or a USB security key;
-the exact prompt depends on the reviewer's device. The automated repository
+the exact prompt depends on the user's device. The automated repository
 browser profile uses a virtual CTAP2 authenticator instead and is independent
 of the hosted account.
 
-Each reviewer should register a credential in their own browser profile. A
+Each user should register a credential in their own browser profile. A
 credential is stored by that browser/device and is not shared with other
-reviewers. The hosted demo nevertheless uses one shared Alice account, so all
+profiles. The hosted instance nevertheless uses one shared Alice account, so all
 registered passkeys remain valid for that account and are visible to the realm
-administrator. This is convenient for a disposable review, not an isolation
+administrator. This is convenient for a disposable demonstration, not an isolation
 boundary for real users.
 
 The client correlates every authorization with a unique OAuth `state` value and
-keeps short-lived state server-side. Different reviewers, browser profiles, and
+keeps short-lived state server-side. Different users, browser profiles, and
 parallel tabs therefore do not overwrite one another's pending request. A
 result page also carries its own result identifier for refresh checks. This is
 appropriate for the single-process disposable demo; it is not a replacement for

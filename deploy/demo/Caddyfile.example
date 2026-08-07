@@ -20,7 +20,7 @@ https://oidc4ac-client.duckdns.org {
 }
 
 # smtp4dev contains only disposable demo mail. It is intentionally public so a
-# reviewer can open verification messages without a second login. Never route
+# users can open verification messages without a second login. Never route
 # real mail or personal data to this service.
 http://oidc4ac-mail.duckdns.org {
     bind 0.0.0.0

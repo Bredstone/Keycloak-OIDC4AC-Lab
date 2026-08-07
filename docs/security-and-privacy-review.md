@@ -8,9 +8,9 @@ against the [OIDC4AC protocol](https://bredstone.github.io/oidc4ac/) from the
 corresponding Keycloak behavior. This review does not claim production
 hardening or multi-node/persistent-grant validation.
 
-The optional hosted demo deliberately exposes its smtp4dev web inbox without a
-login so reviewers can inspect the example email factor. It is a disposable,
-read-only sink for test messages only; no real email or personal data belongs
+The optional hosted instance deliberately exposes its smtp4dev web inbox
+without a login so users can inspect the example email factor. It is a
+disposable sink for test messages only; no real email or personal data belongs
 there.
 
 ## Data disclosure

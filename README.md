@@ -60,11 +60,11 @@ source of that pinned submodule:
 - `scripts/` and `dev.sh` — build, lifecycle, verification, and test
   automation.
 - `docs/` — user and implementation documentation.
-- `submission/` — reviewer-facing artifact notes and the claims checklist.
+- `submission/` — artifact-submission notes and the claims checklist.
 
 Generated Keycloak distributions, Maven caches, provider JARs, and test runtime
 state are created under ignored `.build/`, `.runtime/`, and `target/`
-directories. They are not required in the repository. Reviewer-specific
+directories. They are not required in the repository. Submission-specific
 information is collected in the [artifact appendix](submission/appendix.md).
 
 ## Seals considered
@@ -115,27 +115,26 @@ The default test credentials are `alice / Alice-password-123` and
 `admin / admin`. They are disposable credentials and must not be reused
 outside this artifact.
 
-## Optional hosted demonstration
+## Optional public hosted instance
 
-Reviewers may use the [hosted demonstration guide](docs/hosted-demo.md) to
-publish a disposable VM-backed instance with HTTPS. The hosted instance is a
-convenience for interactive review; the repository and local claim commands
-remain the authoritative, reproducible artifact.
+Anyone can use the [public hosted instance guide](docs/hosted-instance.md) to
+try the running implementation without installing the artifact. The hosted
+instance is a convenience for interactive exploration; the repository and
+local commands remain the authoritative, reproducible artifact.
 
-The hosted demo intentionally uses public, disposable credentials:
+The hosted instance intentionally uses public, disposable credentials:
 
 | Service | Username | Password |
 | --- | --- | --- |
-| Keycloak realm reviewer | `oidc4ac-demo-admin` | `O4AC-3500b25109a07bf339344f1c03f2e83b` |
+| Keycloak realm administrator (read-only) | `oidc4ac-demo-admin` | `O4AC-3500b25109a07bf339344f1c03f2e83b` |
+| Test user | `alice` | `Alice-password-123` |
 | Hosted smtp4dev inbox | none | none (public disposable inbox) |
 
-The test user remains `alice / Alice-password-123`. These credentials are only
-for this demo and must not be reused. The reviewer account is scoped to the
-`oidc4ac` realm and has the read-only `view-realm` role, which is sufficient to
-inspect the configured authentication flows but cannot edit users, clients, or
-flows. The smtp4dev inbox is intentionally public and contains only disposable
-messages. The Flask session secret and the Keycloak bootstrap credentials are
-deliberately not public; set them privately on the VM.
+These credentials are only for this disposable instance and must not be
+reused. The administrator account is scoped to the `oidc4ac` realm and has the
+read-only `view-realm` role, which is sufficient to inspect the configured
+authentication flows but cannot edit users, clients, or flows. The smtp4dev
+inbox is intentionally public and contains only disposable messages.
 
 ## Dependencies
 
