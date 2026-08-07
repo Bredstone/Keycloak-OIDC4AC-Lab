@@ -52,7 +52,7 @@ jq \
          "username": $reviewer_username,
          "enabled": true,
          "credentials": [{"type": "password", "value": $reviewer_password, "temporary": false}],
-         "clientRoles": {"realm-management": ["view-realm"]}
+         "clientRoles": {"realm-management": ["view-realm", "view-identity-providers", "view-clients"]}
        }])' \
     "$ROOT_DIR/config/realm-import.json" >"$OUTPUT_FILE"
 

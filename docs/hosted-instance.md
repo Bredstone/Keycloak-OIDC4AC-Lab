@@ -20,8 +20,10 @@ The hosted instance uses these disposable credentials:
 | Realm administration (read-only) | `oidc4ac-demo-admin` | `O4AC-3500b25109a07bf339344f1c03f2e83b` |
 | Test user | `alice` | `Alice-password-123` |
 
-The administration account can inspect the `oidc4ac` realm and its
-authentication flows. It cannot modify users, clients, or flows. The email
+The administration account has only the read-only
+`view-realm`, `view-identity-providers`, and `view-clients` roles. The Admin
+Console requires these permissions to display the Authentication section. It
+has no `manage-*` roles and cannot modify users, clients, or flows. The email
 inbox requires no login and contains only disposable test messages.
 
 ## Sign in to the Admin Console

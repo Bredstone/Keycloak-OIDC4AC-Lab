@@ -1,6 +1,3 @@
-Failed to create stream fd: Operation not permitted
-Failed to create stream fd: Operation not permitted
-Failed to create stream fd: Operation not permitted
 # OIDC4AC on Keycloak: Reproducible Research Artifact
 
 This repository contains the two software artifacts evaluated in the associated
@@ -152,9 +149,10 @@ The hosted instance intentionally uses public, disposable credentials:
 | Hosted smtp4dev inbox | none | none (public disposable inbox) |
 
 These credentials are only for this disposable instance and must not be
-reused. The administrator account is scoped to the `oidc4ac` realm and has the
-read-only `view-realm` role, which is sufficient to inspect the configured
-authentication flows but cannot edit users, clients, or flows. The smtp4dev
+reused. The administrator account is scoped to the `oidc4ac` realm and has
+only the read-only `view-realm`, `view-identity-providers`, and `view-clients`
+roles needed by the Admin Console to display the Authentication section. It
+has no `manage-*` roles and cannot edit users, clients, or flows. The smtp4dev
 inbox is intentionally public and contains only disposable messages.
 
 To inspect the hosted configuration, open the [Keycloak Admin
