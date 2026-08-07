@@ -14,6 +14,7 @@ services. This page points you to the next document based on your goal.
 | Create a custom authentication method | [Creating a custom authentication method with the SPI](custom-authentication-spi.md) and the provider under `../providers/` |
 | Understand the protocol-to-implementation relationship | [Protocol alignment](protocol-alignment.md) |
 | Review security and privacy | [Security and privacy review](security-and-privacy-review.md) |
+| Use the hosted reviewer deployment | [Hosted demonstration](hosted-demo.md) |
 | Resolve a local issue | [Troubleshooting](troubleshooting.md) |
 
 ## Protocol source

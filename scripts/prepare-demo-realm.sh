@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+umask 077
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 ENV_FILE=${1:-"$ROOT_DIR/deploy/demo/demo.env"}
@@ -22,6 +23,8 @@ source "$ENV_FILE"
 set +a
 
 : "${OIDC4AC_DEMO_CLIENT_URL:?Missing OIDC4AC_DEMO_CLIENT_URL}"
+: "${OIDC4AC_DEMO_REVIEWER_USERNAME:?Missing OIDC4AC_DEMO_REVIEWER_USERNAME}"
+: "${OIDC4AC_DEMO_REVIEWER_PASSWORD:?Missing OIDC4AC_DEMO_REVIEWER_PASSWORD}"
 
 if [[ -d "$OUTPUT_FILE" ]]; then
     echo "Realm output path is a directory: $OUTPUT_FILE" >&2
@@ -32,6 +35,8 @@ fi
 mkdir -p "$(dirname -- "$OUTPUT_FILE")"
 jq \
     --arg client_url "${OIDC4AC_DEMO_CLIENT_URL%/}" \
+    --arg reviewer_username "$OIDC4AC_DEMO_REVIEWER_USERNAME" \
+    --arg reviewer_password "$OIDC4AC_DEMO_REVIEWER_PASSWORD" \
     '(.smtpServer.host = "127.0.0.1")
      | (.smtpServer.port = "2525")
      | ((.clients[] | select(.clientId == "oidc4ac-test-client")) |=
@@ -42,7 +47,13 @@ jq \
          | .attributes["post.logout.redirect.uris"] = ($client_url + "/*")))
      | ((.clients[] | select(.clientId == "oidc4ac-consent-test-client")) |=
         (.redirectUris = [$client_url + "/*"]
-         | .webOrigins = [$client_url]))' \
+         | .webOrigins = [$client_url]))
+     | (.users += [{
+         "username": $reviewer_username,
+         "enabled": true,
+         "credentials": [{"type": "password", "value": $reviewer_password, "temporary": false}],
+         "clientRoles": {"realm-management": ["view-realm"]}
+       }])' \
     "$ROOT_DIR/config/realm-import.json" >"$OUTPUT_FILE"
 
 echo "Prepared hosted demo realm: $OUTPUT_FILE"

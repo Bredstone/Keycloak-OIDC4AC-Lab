@@ -1,19 +1,32 @@
 # Caddy obtains and renews the public Let's Encrypt certificates automatically.
 # Keep the three DuckDNS names in sync with demo.env.
 
-oidc4ac-keycloak.duckdns.org {
+http://oidc4ac-keycloak.duckdns.org {
+    bind 0.0.0.0
+}
+
+https://oidc4ac-keycloak.duckdns.org {
+    bind 0.0.0.0
     reverse_proxy 127.0.0.1:8080
 }
 
-oidc4ac-client.duckdns.org {
+http://oidc4ac-client.duckdns.org {
+    bind 0.0.0.0
+}
+
+https://oidc4ac-client.duckdns.org {
+    bind 0.0.0.0
     reverse_proxy 127.0.0.1:5000
 }
 
-# smtp4dev contains only disposable demo mail. The credentials are intentionally
-# public and documented in the README because this is a disposable reviewer demo.
-oidc4ac-mail.duckdns.org {
-    basic_auth {
-        reviewer $2a$12$UJLXyTEEcVaBU.vX2E2WzOsoubDCLW7q7ORicrfhUJ5lfxSqYC8NS
-    }
+# smtp4dev contains only disposable demo mail. It is intentionally public so a
+# reviewer can open verification messages without a second login. Never route
+# real mail or personal data to this service.
+http://oidc4ac-mail.duckdns.org {
+    bind 0.0.0.0
+}
+
+https://oidc4ac-mail.duckdns.org {
+    bind 0.0.0.0
     reverse_proxy 127.0.0.1:5080
 }

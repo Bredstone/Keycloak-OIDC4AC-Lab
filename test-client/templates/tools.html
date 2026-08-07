@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Factor tools · OIDC4AC native lab{% endblock %}
+{% block content %}
+<section class="result-heading tools-heading">
+  <p class="eyebrow">Reviewer shortcuts</p>
+  <h1>Factor tools</h1>
+  <p class="muted">The three links below cover the disposable credentials used by the OIDC4AC demonstrations. Open them in separate tabs while keeping the request workbench available.</p>
+</section>
+
+<div class="tools-grid">
+  <article class="card tool-card">
+    <p class="eyebrow">otp</p>
+    <h2>One-time password</h2>
+    <p class="muted">View Alice's current six-digit TOTP without reloading the page. The helper includes a copy button and changes the code only at the 30-second boundary.</p>
+    <a class="button primary" href="/otp" target="_blank" rel="noreferrer">Open OTP helper ↗</a>
+  </article>
+  <article class="card tool-card">
+    <p class="eyebrow">email</p>
+    <h2>Email verification inbox</h2>
+    <p class="muted">Open the public, disposable smtp4dev inbox to read verification messages sent by the example email SPI.</p>
+    <a class="button secondary" href="{{ smtp4dev_url }}" target="_blank" rel="noreferrer">Open email inbox ↗</a>
+  </article>
+  <article class="card tool-card">
+    <p class="eyebrow">pop</p>
+    <h2>WebAuthn / passkey</h2>
+    <p class="muted">Register Alice's passkey in the Keycloak Account Console before selecting a request that contains the <code>pop</code> method.</p>
+    <a class="button secondary" href="{{ account_url }}" target="_blank" rel="noreferrer">Open account console ↗</a>
+  </article>
+</div>
+
+<div class="notice">Use <code>alice / Alice-password-123</code> in the Account Console. After registering a passkey, return to the workbench and choose the nested passkey preset or add a <code>pop</code> factor manually.</div>
+{% endblock %}

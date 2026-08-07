@@ -90,7 +90,7 @@ time.
 ## 3. Password and OTP with `all_of`
 
 Select **pwd + otp (all_of)**. Alice already has a disposable TOTP credential;
-the OTP helper in the header displays its current code. The request is
+the **Factor tools** page displays its current code. The request is
 conceptually:
 
 ```json

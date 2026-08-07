@@ -25,6 +25,7 @@ import json
 import os
 import secrets
 import struct
+from threading import Lock
 import time
 from typing import Any
 
@@ -48,6 +49,8 @@ PUBLIC_URL = os.environ.get("OIDC4AC_PUBLIC_URL", "").rstrip("/")
 # requests out of the browser's signed Flask session cookie.
 AUTHORIZATION_CACHE: dict[str, dict[str, Any]] = {}
 TOKEN_CACHE: dict[str, dict[str, Any]] = {}
+CACHE_LOCK = Lock()
+CACHE_TTL_SECONDS = 15 * 60
 
 DEFAULT_CLAIMS: dict[str, Any] = {
     "id_token": {
@@ -75,6 +78,16 @@ class ClaimsValidationError(ValueError):
 
 def pretty_json(value: Any) -> str:
     return json.dumps(value, indent=2, ensure_ascii=False, sort_keys=False)
+
+
+def prune_caches() -> None:
+    """Bound the disposable in-memory state used by concurrent demo sessions."""
+    cutoff = time.time() - CACHE_TTL_SECONDS
+    with CACHE_LOCK:
+        for cache in (AUTHORIZATION_CACHE, TOKEN_CACHE):
+            expired = [key for key, value in cache.items() if value.get("created_at", 0) < cutoff]
+            for key in expired:
+                cache.pop(key, None)
 
 
 def current_totp(secret: str = TOTP_SECRET) -> tuple[str, int]:
@@ -124,6 +137,7 @@ def parse_claims(raw_claims: str | None) -> dict[str, Any]:
 
 
 def home_response(raw_claims: str | None = None, error: str | None = None, status: int = 200) -> tuple[str, int] | str:
+    prune_caches()
     page = render_template(
         "home.html",
         issuer=ISSUER,
@@ -160,6 +174,15 @@ def create_app() -> Flask:
             code=code,
             remaining=remaining,
             secret_base32=base64.b32encode(TOTP_SECRET.encode()).decode().rstrip("="),
+        )
+
+    @app.get("/tools")
+    def factor_tools() -> str:
+        """Provide one navigation point for the disposable factor helpers."""
+        return render_template(
+            "tools.html",
+            smtp4dev_url=SMTP4DEV_URL,
+            account_url=f"{ISSUER.rstrip('/')}/account",
         )
 
     @app.get("/otp-code")
@@ -206,8 +229,13 @@ def create_app() -> Flask:
 
         nonce = secrets.token_urlsafe(32)
         context_id = secrets.token_urlsafe(24)
-        AUTHORIZATION_CACHE[context_id] = {"claims": claims, "nonce": nonce}
-        session["oidc4ac_context"] = context_id
+        prune_caches()
+        with CACHE_LOCK:
+            AUTHORIZATION_CACHE[context_id] = {
+                "claims": claims,
+                "nonce": nonce,
+                "created_at": time.time(),
+            }
         parameters: dict[str, str] = {"nonce": nonce}
         if request.form.get("offline_access") == "on":
             parameters["scope"] = "openid profile email offline_access"
@@ -216,7 +244,10 @@ def create_app() -> Flask:
         if request.form.get("prompt_login") == "on":
             parameters["prompt"] = "login"
         callback_url = f"{PUBLIC_URL}/callback" if PUBLIC_URL else url_for("callback", _external=True)
-        return oauth.keycloak.authorize_redirect(callback_url, **parameters)
+        # Supplying our own state gives every tab/request an independent
+        # correlation key. It avoids a shared session slot overwriting a
+        # pending authorization when reviewers use the client concurrently.
+        return oauth.keycloak.authorize_redirect(callback_url, state=context_id, **parameters)
 
     @app.get("/callback")
     def callback() -> tuple[str, int] | str:
@@ -226,8 +257,9 @@ def create_app() -> Flask:
                 error=request.args["error"],
                 description=request.args.get("error_description", "No public description was returned."),
             )
-        context_id = session.pop("oidc4ac_context", None)
-        context = AUTHORIZATION_CACHE.pop(context_id, None) if context_id else None
+        context_id = request.args.get("state")
+        with CACHE_LOCK:
+            context = AUTHORIZATION_CACHE.pop(context_id, None) if context_id else None
         if context is None:
             return render_template(
                 "error.html", error="missing_context", description="The local relying-party session has expired."
@@ -245,15 +277,22 @@ def create_app() -> Flask:
             ), 400
 
         result_id = secrets.token_urlsafe(24)
-        TOKEN_CACHE[result_id] = {"refresh_token": token.get("refresh_token"), "claims": context["claims"]}
+        with CACHE_LOCK:
+            TOKEN_CACHE[result_id] = {
+                "refresh_token": token.get("refresh_token"),
+                "claims": context["claims"],
+                "created_at": time.time(),
+            }
         session["oidc4ac_result"] = result_id
         return render_result(context["claims"], id_token, userinfo, token.get("access_token"), True,
-                             "Authorization code response")
+                             "Authorization code response", result_id)
 
     @app.post("/refresh")
     def refresh() -> tuple[str, int] | str:
-        result_id = session.get("oidc4ac_result")
-        cached = TOKEN_CACHE.get(result_id)
+        prune_caches()
+        result_id = request.form.get("result_id") or session.get("oidc4ac_result")
+        with CACHE_LOCK:
+            cached = TOKEN_CACHE.get(result_id)
         if not cached or not cached.get("refresh_token"):
             return render_template(
                 "error.html", error="no_refresh_token", description="Start a new authorization request to test refresh."
@@ -275,8 +314,10 @@ def create_app() -> Flask:
                 description="The refreshed token response could not be verified.",
             ), 400
         cached["refresh_token"] = token.get("refresh_token", cached["refresh_token"])
+        with CACHE_LOCK:
+            cached["created_at"] = time.time()
         return render_result(cached["claims"], id_token, userinfo, token.get("access_token"), True,
-                             "Refresh token response")
+                             "Refresh token response", result_id)
 
     return app
 
@@ -332,7 +373,7 @@ def builder_discovery_metadata() -> dict[str, Any]:
 
 def render_result(
     claims: dict[str, Any], id_token: dict[str, Any], userinfo: dict[str, Any], access_token: Any,
-    allow_refresh: bool, source: str
+    allow_refresh: bool, source: str, result_id: str
 ) -> str:
     return render_template(
         "result.html",
@@ -343,6 +384,7 @@ def render_result(
         userinfo=pretty_json(userinfo),
         allow_refresh=allow_refresh,
         source=source,
+        result_id=result_id,
     )
 
 

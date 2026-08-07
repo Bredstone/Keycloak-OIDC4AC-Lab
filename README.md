@@ -126,12 +126,16 @@ The hosted demo intentionally uses public, disposable credentials:
 
 | Service | Username | Password |
 | --- | --- | --- |
-| Keycloak administrator | `oidc4ac-demo-admin` | `O4AC-3500b25109a07bf339344f1c03f2e83b` |
-| smtp4dev inbox | `reviewer` | `Mail-08fda6827446f552b19931fa44650f16` |
+| Keycloak realm reviewer | `oidc4ac-demo-admin` | `O4AC-3500b25109a07bf339344f1c03f2e83b` |
+| Hosted smtp4dev inbox | none | none (public disposable inbox) |
 
 The test user remains `alice / Alice-password-123`. These credentials are only
-for this demo and must not be reused. The Flask session secret is deliberately
-not public; set `OIDC4AC_DEMO_FLASK_SECRET` privately on the VM.
+for this demo and must not be reused. The reviewer account is scoped to the
+`oidc4ac` realm and has the read-only `view-realm` role, which is sufficient to
+inspect the configured authentication flows but cannot edit users, clients, or
+flows. The smtp4dev inbox is intentionally public and contains only disposable
+messages. The Flask session secret and the Keycloak bootstrap credentials are
+deliberately not public; set them privately on the VM.
 
 ## Dependencies
 
@@ -158,7 +162,8 @@ This artifact intentionally starts a disposable development environment:
 - the default Keycloak administrator password is `admin`;
 - the realm contains test users, a test client secret, and a disposable OTP
   fixture;
-- smtp4dev accepts and displays test email messages;
+- smtp4dev accepts and displays test email messages (the hosted inbox is public
+  by design and must contain no real data);
 - the Flask client uses a development secret unless overridden; and
 - `./dev.sh run` stops this lab's Compose services by default.
 
@@ -222,8 +227,8 @@ For a manual functional check:
 3. Sign in as `alice` / `Alice-password-123`.
 4. Confirm the result page contains `amr_details` with the `pwd` identifier and
    an execution timestamp.
-5. Try a `pwd + otp` preset and read the current code from the test client's
-   OTP helper.
+5. Try a `pwd + otp` preset and read/copy the current code from the test
+   client's **Factor tools** page.
 
 ![OIDC4AC test-client workbench](docs/images/test-client-workbench.png)
 

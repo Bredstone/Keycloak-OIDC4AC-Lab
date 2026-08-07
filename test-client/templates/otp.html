@@ -4,17 +4,18 @@
 <section class="result-heading otp-heading">
   <p class="eyebrow">Disposable lab tool</p>
   <h1>Pre-registered OTP</h1>
-  <p class="muted">Use this page in a separate tab while testing an <code>otp</code> request for the seeded <code>{{ username }}</code> user. The code refreshes automatically every 30 seconds.</p>
+  <p class="muted">Use this page while testing an <code>otp</code> request for the seeded <code>{{ username }}</code> user. The page keeps its layout and selection intact; only the code changes at the 30-second boundary.</p>
 </section>
 
 <section class="card otp-card" aria-labelledby="otp-code-title">
   <div class="otp-card-heading">
     <div>
       <p class="eyebrow">alice · TOTP</p>
-      <h2 id="otp-code-title" class="otp-code">{{ code }}</h2>
+      <h2 id="otp-code-title" class="otp-code" tabindex="0">{{ code }}</h2>
     </div>
     <div class="otp-countdown"><span id="otp-remaining">{{ remaining }}</span>s remaining</div>
   </div>
+  <div class="button-row otp-actions"><button class="secondary" id="copy-otp" type="button">Copy code</button><a class="button quiet" href="/tools">Back to factor tools</a></div>
   <p id="otp-status" class="helper" role="status">The displayed code is generated from the disposable realm credential.</p>
   <dl class="otp-details">
     <div><dt>Username</dt><dd><code>{{ username }}</code></dd></div>
@@ -30,21 +31,47 @@
   const code = document.querySelector('.otp-code');
   const remaining = document.querySelector('#otp-remaining');
   const status = document.querySelector('#otp-status');
+  const copyButton = document.querySelector('#copy-otp');
+  let seconds = Number(remaining.textContent);
+  let refreshing = false;
 
   async function refresh() {
+    if (refreshing) return;
+    refreshing = true;
     try {
       const response = await fetch('/otp-code', { headers: { Accept: 'application/json' } });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || 'OTP refresh failed.');
-      code.textContent = payload.code;
-      remaining.textContent = payload.remaining;
+      // Do not touch the code node unless the TOTP actually rotated. This
+      // preserves a text selection while the countdown is running.
+      if (code.textContent !== payload.code) code.textContent = payload.code;
+      seconds = Number(payload.remaining);
+      remaining.textContent = seconds;
       status.textContent = 'The displayed code is generated from the disposable realm credential.';
     } catch (error) {
       status.textContent = `Unable to refresh the OTP code: ${error.message}`;
+    } finally {
+      refreshing = false;
     }
   }
 
-  window.setInterval(refresh, 1000);
+  copyButton.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(code.textContent.trim());
+      status.textContent = 'OTP copied to the clipboard.';
+    } catch (error) {
+      status.textContent = 'Copy was blocked by the browser; select the code manually.';
+    }
+  });
+
+  window.setInterval(() => {
+    seconds -= 1;
+    if (seconds <= 0) {
+      refresh();
+      return;
+    }
+    remaining.textContent = seconds;
+  }, 1000);
 })();
 </script>
 {% endblock %}
