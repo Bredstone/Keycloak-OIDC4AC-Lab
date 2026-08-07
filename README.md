@@ -245,6 +245,8 @@ For a manual functional check:
 5. Try the **Password and OTP (all_of)** preset and open the test client's
    **Factor tools** page to read/copy the current code from the OTP helper.
 
+<!-- Screenshot placeholder: replace docs/images/test-client-workbench.png with a
+     current workbench capture showing the Factor tools link in the header. -->
 ![OIDC4AC test-client workbench](docs/images/test-client-workbench.png)
 
 Stop the environment with:
