@@ -38,8 +38,8 @@ The **Factor tools** link in the header groups the disposable helpers used by
 the examples:
 
 - **OTP helper** shows Alice's current six-digit code and has a copy button. It
-  updates the code only when the 30-second period changes, so selecting or
-  copying it is not interrupted by a page reload.
+  updates the code through JavaScript only when the 30-second period changes,
+  without reloading the page, so selecting or copying it is not interrupted.
 - **Email inbox** opens the smtp4dev viewer. The public hosted inbox is
   intentionally public and contains only disposable messages.
 - **WebAuthn / passkey** opens Alice's Keycloak Account Console. Sign in with

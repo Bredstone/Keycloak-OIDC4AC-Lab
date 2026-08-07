@@ -39,7 +39,7 @@ CLIENT_ID = os.environ.get("OIDC_CLIENT_ID", "oidc4ac-test-client")
 CLIENT_SECRET = os.environ.get("OIDC_CLIENT_SECRET", "oidc4ac-lab-client-secret")
 SMTP4DEV_URL = os.environ.get("SMTP4DEV_URL", "http://localhost:5080")
 TOTP_SECRET = os.environ.get("OIDC4AC_TOTP_SECRET", "DJmQfC73VGFhw7D4QJ8A")
-# A hosted demo terminates TLS in a reverse proxy while this Flask process
+# A public deployment may terminate TLS in a reverse proxy while this Flask process
 # remains on a private loopback port. When set, use the public URL explicitly
 # for the OAuth callback instead of deriving it from the internal request.
 PUBLIC_URL = os.environ.get("OIDC4AC_PUBLIC_URL", "").rstrip("/")
@@ -246,7 +246,7 @@ def create_app() -> Flask:
         callback_url = f"{PUBLIC_URL}/callback" if PUBLIC_URL else url_for("callback", _external=True)
         # Supplying our own state gives every tab/request an independent
         # correlation key. It avoids a shared session slot overwriting a
-        # pending authorization when reviewers use the client concurrently.
+        # pending authorization when users use the client concurrently.
         return oauth.keycloak.authorize_redirect(callback_url, state=context_id, **parameters)
 
     @app.get("/callback")

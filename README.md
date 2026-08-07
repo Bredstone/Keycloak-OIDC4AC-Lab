@@ -36,6 +36,23 @@ authentication-method-details SPI.
 The artifact is a disposable research environment, not a production Keycloak
 distribution or a protocol-conformance certification.
 
+<p align="center">
+  <a href="https://oidc4ac-client.duckdns.org">
+    <img src="https://img.shields.io/badge/Launch%20public%20demo-2563eb?style=for-the-badge" alt="Launch public demo">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://oidc4ac-client.duckdns.org">Test client</a> ·
+  <a href="https://oidc4ac-keycloak.duckdns.org">Keycloak</a> ·
+  <a href="https://oidc4ac-mail.duckdns.org">Email inbox</a> ·
+  <a href="docs/hosted-instance.md">Usage guide</a>
+</p>
+
+The [public hosted instance guide](docs/hosted-instance.md) contains the
+disposable credentials and a short walkthrough. For a reproducible local run,
+continue with the installation instructions below.
+
 The submission uses one primary public repository. The companion link records
 the public origin of the pinned Keycloak source; it is not a second submission
 URL.
@@ -117,10 +134,9 @@ outside this artifact.
 
 ## Optional public hosted instance
 
-Anyone can use the [public hosted instance guide](docs/hosted-instance.md) to
-try the running implementation without installing the artifact. The hosted
-instance is a convenience for interactive exploration; the repository and
-local commands remain the authoritative, reproducible artifact.
+Anyone can use the hosted instance to try the running implementation without
+installing the artifact. It is a convenience for interactive exploration; the
+repository and local commands remain the authoritative, reproducible artifact.
 
 The hosted instance intentionally uses public, disposable credentials:
 
@@ -226,8 +242,8 @@ For a manual functional check:
 3. Sign in as `alice` / `Alice-password-123`.
 4. Confirm the result page contains `amr_details` with the `pwd` identifier and
    an execution timestamp.
-5. Try a `pwd + otp` preset and read/copy the current code from the test
-   client's **Factor tools** page.
+5. Try the **Password and OTP (all_of)** preset and open the test client's
+   **Factor tools** page to read/copy the current code from the OTP helper.
 
 ![OIDC4AC test-client workbench](docs/images/test-client-workbench.png)
 

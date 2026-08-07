@@ -54,7 +54,7 @@ tests use the current virtual CTAP2 path; update a realm's WebAuthn policy to
 
 ## OTP, email, and passkeys
 
-**OTP + password returns `unmet_authentication_requirements`.** Check that the
+**Password and OTP (all_of) returns `unmet_authentication_requirements`.** Check that the
 OTP helper code is fresh, that Alice's imported OTP credential is present, and
 that the request is using the current realm/client. The helper rotates every
 30 seconds; do not reuse a code after a completed authorization.
@@ -62,13 +62,14 @@ that the request is using the current realm/client. The helper rotates every
 **An account without OTP is asked to enroll and then fails.** That is the
 expected enrollment regression path: the browser completes the required action
 and the resumed authentication must still perform OTP verification before a
-`pwd + otp` essential request can succeed. The dedicated browser suite covers
+**Password and OTP (all_of)** request can succeed. The dedicated browser suite covers
 this with `otp-user`.
 
-**Email code does not arrive.** Open <http://localhost:5080>, confirm the
-`smtp4dev` service is running with `docker compose ps`, and check the imported
-realm SMTP host/port. Rebuild the provider with `./dev.sh provider-build` if
-the email method is absent from Discovery.
+**Email code does not arrive.** Open **Factor tools** in the test client and
+select **Open email inbox** (or open <http://localhost:5080> locally). Confirm
+the `smtp4dev` service is running with `docker compose ps`, and check the
+imported realm SMTP host/port. Rebuild the provider with `./dev.sh
+provider-build` if the email method is absent from Discovery.
 
 **A `pop` request prompts for another factor.** The HTTP runner cannot fake
 WebAuthn. Use `./dev.sh test-browser` or register a passkey through the Account

@@ -53,7 +53,8 @@ change.
 
 ## 2. A simple password request
 
-Choose **Essential password**, keep **ID Token** selected, and click authorize.
+Choose **Essential password**, keep **ID Token** selected, and click **Start
+authorization**.
 The client sends a normal OIDC authorization-code request with a `claims`
 parameter. The `claims` value is the JSON in the workbench editor; the browser
 does not receive a second private request format.
@@ -89,8 +90,9 @@ time.
 
 ## 3. Password and OTP with `all_of`
 
-Select **pwd + otp (all_of)**. Alice already has a disposable TOTP credential;
-the **Factor tools** page displays its current code. The request is
+Select **Password and OTP (all_of)**. Alice already has a disposable TOTP
+credential; open **Factor tools** in the header and then the **OTP helper** to
+display its current code. The request is
 conceptually:
 
 ```json
@@ -114,7 +116,7 @@ for optional fields from only one method.
 
 ## 4. Alternatives with `one_of`
 
-Select **pwd OR otp (one_of)**:
+Select **Password or OTP (one_of)**:
 
 ```json
 {
@@ -137,9 +139,9 @@ immutable plan. An explicit user cancellation remains `access_denied`.
 
 ## 5. Nested expressions and four factors
 
-Groups are recursive. The workbench includes `(pwd AND otp) OR pop` and
-`pwd AND (otp OR email)` presets. A four-factor request is valid when all four
-factor subflows are configured:
+Groups are recursive. The workbench includes **Nested: (password AND OTP) OR
+proof-of-possession** and **Nested: password AND (OTP OR email)** presets. A
+four-factor request is valid when all four factor subflows are configured:
 
 ```json
 {
@@ -216,10 +218,11 @@ The lab's `email` factor is a separate Maven SPI project under
 `providers/oidc4ac-test-email`. It sends a six-digit code through smtp4dev and
 returns only safe, configured method details. To try it:
 
-1. select an email preset;
-2. authorize as Alice;
-3. open <http://localhost:5080> in another tab;
-4. copy the newest code into Keycloak; and
+1. select **Email verification code**;
+2. open **Factor tools** in the header and click **Open email inbox** in another
+   tab;
+3. return to the workbench, click **Start authorization**, and sign in as Alice;
+4. copy the newest message code into Keycloak; and
 5. inspect the `email` execution and its disclosed properties on the result
    page.
 
