@@ -199,10 +199,10 @@ cd Keycloak-OIDC4AC-Lab
 git submodule update --init --recursive
 ```
 
-This artifact branch uses the pinned Keycloak submodule. If a checkout does not
-contain the submodule, the helper falls back to the reviewed commit
-`ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc`. To use a different local checkout,
-set `OIDC4AC_LAB_KEYCLOAK_REPO` before starting the build.
+This artifact branch uses the pinned Keycloak submodule. If the submodule is
+missing or not initialized, the helper falls back to a managed checkout of the
+reviewed commit `ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc`. To use a different
+local checkout, set `OIDC4AC_LAB_KEYCLOAK_REPO` before starting the build.
 
 Start the complete laboratory:
 

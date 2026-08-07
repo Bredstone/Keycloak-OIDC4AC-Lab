@@ -32,7 +32,8 @@ git submodule update --init --recursive
 The submodule is pinned to the reviewed commit on the
 `oidc4ac-implementation` branch. The source helper stages it into the ignored
 `.runtime/keycloak-source` checkout automatically, so the Keycloak build cannot
-modify the tracked submodule.
+modify the tracked submodule. If the submodule directory is present but not
+initialized, the helper uses the pinned remote fallback shown below instead.
 When working on another implementation, set `OIDC4AC_LAB_KEYCLOAK_REPO` to a
 different checkout before running `./dev.sh build`.
 

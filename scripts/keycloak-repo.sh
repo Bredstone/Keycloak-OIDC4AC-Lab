@@ -71,13 +71,12 @@ resolve_keycloak_repo() {
     # build cannot modify the submodule's tracked files.
     checkout="$lab_dir/keycloak-oidc4ac"
     if [[ -e "$checkout" ]]; then
-        if [[ ! -x "$checkout/mvnw" ]]; then
-            echo "The Keycloak submodule is not initialized: $checkout" >&2
-            echo "Run 'git submodule update --init --recursive' and try again." >&2
-            return 1
+        if [[ -x "$checkout/mvnw" ]]; then
+            stage_bundled_keycloak_repo "$lab_dir"
+            return $?
         fi
-        stage_bundled_keycloak_repo "$lab_dir"
-        return $?
+        echo "The Keycloak submodule is missing or not initialized: $checkout" >&2
+        echo "Falling back to the pinned remote checkout." >&2
     fi
 
     command -v git >/dev/null 2>&1 || {
