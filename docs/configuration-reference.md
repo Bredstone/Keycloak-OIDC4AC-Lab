@@ -22,14 +22,14 @@ resolve `*.localhost` to loopback.
 
 ## Source and build variables
 
-The artifact branch includes the reviewed Keycloak implementation as the
+The repository includes the Keycloak implementation as the
 `keycloak-oidc4ac` submodule. Initialize it after cloning:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-The submodule is pinned to the reviewed commit on the
+The submodule is pinned to a specific commit on the
 `oidc4ac-implementation` branch. The source helper stages it into the ignored
 `.runtime/keycloak-source` checkout automatically, so the Keycloak build cannot
 modify the tracked submodule. If the submodule directory is present but not

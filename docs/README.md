@@ -15,6 +15,7 @@ services. This page points you to the next document based on your goal.
 | Understand the protocol-to-implementation relationship | [Protocol alignment](protocol-alignment.md) |
 | Review security and privacy | [Security and privacy review](security-and-privacy-review.md) |
 | Try the public hosted instance | [Public hosted instance](hosted-instance.md) |
+| Run automated tests and repeat experiments | [Testing and reproducibility](testing.md) |
 | Resolve a local issue | [Troubleshooting](troubleshooting.md) |
 
 ## Protocol source

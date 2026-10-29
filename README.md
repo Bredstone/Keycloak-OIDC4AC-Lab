@@ -1,36 +1,21 @@
-# OIDC4AC on Keycloak: Reproducible Research Artifact
+# Keycloak OIDC4AC Lab
 
-This repository contains the two software artifacts evaluated in the associated
-paper: an experimental OIDC4AC implementation for Keycloak and a self-contained
-laboratory that exercises it through a relying-party test client, an example
-authentication SPI, and automated HTTP/browser scenarios.
+A self-contained laboratory for trying OIDC4AC with a modified Keycloak server,
+an interactive relying-party test client, an example authentication provider,
+and automated HTTP/browser tests.
 
-## Summary
+## What is OIDC4AC?
 
-**Associated paper title:** OIDC4AC: Extending OpenID Connect for Structured and Negotiable Authentication Contexts
-
-**Associated paper abstract:**
-
-> OpenID Connect (OIDC) is a widely adopted authentication protocol on the web.
-> Despite its popularity, it provides limited expressiveness for describing how
-> users are authenticated, constraining its applicability in high-assurance,
-> auditable scenarios. To understand the extent of this gap, a Multivocal
-> Literature Review was conducted, revealing the absence of an integrated,
-> OIDC-native model for representing factors and specifying authentication
-> requirements. To address these gaps, this paper proposes OpenID Connect for
-> Authentication Context (OIDC4AC), a new OIDC protocol extension that enables
-> fine-grained specification and detailed representation of authentication
-> factors, improving interoperability and auditability.
-
-The artifact demonstrates how
+OpenID Connect identifies users, but offers limited detail about how they were
+authenticated.
 [OpenID Connect for Authentication Context (OIDC4AC)](https://bredstone.github.io/oidc4ac/)
-can express authentication requirements and return a verifiable description of
-the methods actually used. The Keycloak implementation supports recursive
-`all_of`/`one_of` requirements, Discovery, ID Token/UserInfo projections,
-disclosure policy, browser-factor planning, and extensibility through a private
-authentication-method-details SPI.
+extends OIDC so applications can request authentication requirements and receive
+structured information about the methods actually used, when they ran, and
+their properties. See the [protocol specification](https://bredstone.github.io/oidc4ac/)
+for the normative reference and the [Keycloak guide](docs/keycloak-oidc4ac.md)
+for the implementation overview.
 
-The artifact is a disposable research environment, not a production Keycloak
+This is a disposable research environment, not a production Keycloak
 distribution or a protocol-conformance certification.
 
 <p align="center">
@@ -51,20 +36,38 @@ The [public hosted instance guide](docs/hosted-instance.md) contains the
 disposable credentials and a short walkthrough. For a reproducible local run,
 continue with the installation instructions below.
 
-The submission uses one primary public repository. The companion link records
-the public origin of the pinned Keycloak source; it is not a second submission
-URL.
+## Implementation features
 
-- **Primary artifact repository:** [Bredstone/Keycloak-OIDC4AC-Lab (`sbseg2026-artifact` branch)](https://github.com/Bredstone/Keycloak-OIDC4AC-Lab/tree/sbseg2026-artifact), which contains the lab, test client, provider fixture, tests, and documentation.
-- **Companion implementation repository:** [Bredstone/keycloak-OIDC4AC](https://github.com/Bredstone/keycloak-OIDC4AC/tree/oidc4ac-implementation), which contains the modified Keycloak implementation. The reviewed source is pinned to commit [ec3fd9d](https://github.com/Bredstone/keycloak-OIDC4AC/commit/ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc).
+- Request individual factors or combine them with nested `all_of` (all required)
+  and `one_of` (alternatives) expressions.
+- Discover supported methods and properties, control disclosure, and inspect
+  authentication context in ID Tokens and UserInfo.
+- Try password, OTP, WebAuthn/passkey, and email-code flows in the
+  [test client](docs/test-client.md).
+- Connect your own authenticator and authentication-method-details SPI to the
+  modified Keycloak server. The [example email provider](providers/oidc4ac-test-email/)
+  demonstrates this extension point; follow the [custom SPI guide](docs/custom-authentication-spi.md)
+  to implement your own method.
+
+The modified server is maintained in
+[Bredstone/keycloak-OIDC4AC](https://github.com/Bredstone/keycloak-OIDC4AC/tree/oidc4ac-implementation).
+This lab pins its source to commit
+[ec3fd9d](https://github.com/Bredstone/keycloak-OIDC4AC/commit/ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc)
+for repeatable builds.
+
+## Documentation
+
+Start with the installation below, then use the [test-client guide](docs/test-client.md)
+and [usage examples](docs/usage-flows.md). The [documentation index](docs/README.md)
+links all configuration, SPI, security, and troubleshooting guides.
 
 ## Repository structure
 
-The branch contains the laboratory and the reviewed Keycloak source as the
+The repository contains the laboratory and the pinned Keycloak source as the
 `keycloak-oidc4ac/` submodule. The companion repository listed above is the
 source of that pinned submodule:
 
-- `keycloak-oidc4ac/` — a Git submodule pinned to the reviewed Keycloak
+- `keycloak-oidc4ac/` — a Git submodule pinned to the Keycloak
   implementation commit (`ec3fd9d`) on the
   `oidc4ac-implementation` branch.
 - `config/` — the disposable `oidc4ac` realm import.
@@ -75,34 +78,16 @@ source of that pinned submodule:
 - `scripts/` and `dev.sh` — build, lifecycle, verification, and test
   automation.
 - `docs/` — user and implementation documentation.
-- `submission/` — artifact-submission notes and the claims checklist.
 
 Generated Keycloak distributions, Maven caches, provider JARs, and test runtime
 state are created under ignored `.build/`, `.runtime/`, and `target/`
-directories. They are not required in the repository. Submission-specific
-information is collected in the [artifact appendix](submission/appendix.md).
-
-## Seals considered
-
-This submission requests all four artifact seals:
-
-- **Available (SeloD):** both artifacts are available from this stable
-  repository; the Keycloak implementation is pinned as a submodule.
-- **Functional (SeloF):** a clean Docker-based installation, a minimal smoke
-  test, an interactive workbench, and automated HTTP/browser scenarios are
-  provided.
-- **Sustainable (SeloS):** the implementation is modular, the SPI boundary is
-  documented, the repository structure is explicit, and the main claims map to
-  reproducible commands.
-- **Reproducible Experiments (SeloR):** the claim-oriented experiment commands
-  below automate the build and verification of the main protocol and
-  integration behaviors.
+directories. They are not required in the repository.
 
 ## Basic information
 
 ### Execution environment
 
-The artifact was designed for a clean Linux, macOS, or Windows host with:
+The lab requires a Linux, macOS, or Windows host with:
 
 - Docker Engine and Docker Compose v2;
 - Git with submodule support;
@@ -128,7 +113,7 @@ the Docker runtime must support host networking.
 
 The default test credentials are `alice / Alice-password-123` and
 `admin / admin`. They are disposable credentials and must not be reused
-outside this artifact.
+outside this lab.
 
 To inspect the local Keycloak configuration, open
 <http://keycloak.localhost:8080/admin/> and sign in with `admin / admin`.
@@ -137,8 +122,8 @@ Select the `oidc4ac` realm, then open **Authentication → Flows**.
 ## Optional public hosted instance
 
 Anyone can use the hosted instance to try the running implementation without
-installing the artifact. It is a convenience for interactive exploration; the
-repository and local commands remain the authoritative, reproducible artifact.
+installing the lab. It is a convenience for interactive exploration; use the
+repository and local commands for repeatable tests.
 
 The hosted instance intentionally uses public, disposable credentials:
 
@@ -163,11 +148,11 @@ bootstrap account.
 
 ## Dependencies
 
-The main versions used by this artifact are:
+The main dependencies are:
 
 | Dependency | Version or source |
 | --- | --- |
-| Keycloak implementation | `keycloak-oidc4ac` submodule at the pinned review commit |
+| Keycloak implementation | `keycloak-oidc4ac` submodule at the pinned commit |
 | Keycloak distribution | 26.7.0 |
 | Maven builder | `maven:3.9-eclipse-temurin-21` pinned by digest in `dev.sh` and `scripts/lint.sh` |
 | Python test/client images | `python:3.13.3-slim-bookworm` pinned by digest in their Dockerfiles |
@@ -182,7 +167,7 @@ in `requirements-dev.txt`.
 
 ## Security concerns
 
-This artifact intentionally starts a disposable development environment:
+The lab intentionally starts a disposable development environment:
 
 - the default Keycloak administrator password is `admin`;
 - the realm contains test users, a test client secret, and a disposable OTP
@@ -192,7 +177,7 @@ This artifact intentionally starts a disposable development environment:
 - the Flask client uses a development secret unless overridden; and
 - `./dev.sh run` stops this lab's Compose services by default.
 
-Run the artifact only on an isolated local or disposable machine. Do not expose
+Run the local lab only on an isolated local or disposable machine. Do not expose
 the services to the public internet, do not reuse the credentials or OTP seed,
 and use `./dev.sh run --no-kill` if other local containers must be preserved.
 The implementation does not claim production hardening, hardware WebAuthn
@@ -200,17 +185,16 @@ coverage, or multi-node failover validation.
 
 ## Installation
 
-Clone the primary artifact repository:
+Clone the repository with its pinned Keycloak source:
 
 ```bash
-git clone --branch sbseg2026-artifact https://github.com/Bredstone/Keycloak-OIDC4AC-Lab.git
+git clone --recurse-submodules https://github.com/Bredstone/Keycloak-OIDC4AC-Lab.git
 cd Keycloak-OIDC4AC-Lab
-git submodule update --init --recursive
 ```
 
-This artifact branch uses the pinned Keycloak submodule. If the submodule is
+The lab uses the pinned Keycloak submodule. If the submodule is
 missing or not initialized, the helper falls back to a managed checkout of the
-reviewed commit `ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc`. To use a different
+pinned commit `ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc`. To use a different
 local checkout, set `OIDC4AC_LAB_KEYCLOAK_REPO` before starting the build.
 
 Start the complete laboratory:
@@ -220,8 +204,7 @@ Start the complete laboratory:
 ```
 
 The first run downloads Docker/Maven dependencies, builds the Keycloak
-distribution from the pinned submodule (or from the managed `.runtime` checkout
-when using the primary lab repository), compiles the example email provider,
+distribution in the managed `.runtime` checkout, compiles the example email provider,
 imports the disposable realm, and starts the test client and smtp4dev. Expect
 the first build to take several minutes and use several gigabytes of temporary
 disk space.
@@ -263,101 +246,33 @@ Stop the environment with:
 ./dev.sh down
 ```
 
-## Experiments
+## Automated tests
 
-The following experiments correspond to the main artifact claims. Commands are
-run from the repository root after installation. Each experiment is automated
-and can be run independently after the required build step.
+Run tests from the repository root after installation:
 
-### Claim 1 — OIDC4AC request, evaluation, and disclosure
+| Command | Coverage |
+| --- | --- |
+| `./dev.sh verify` | Service readiness and OIDC4AC Discovery |
+| `./dev.sh test-http` | Requirements, disclosure, OTP/email, snapshots, and refresh |
+| `./dev.sh test-browser` | Factor planning, WebAuthn/passkeys, alternatives, and cancellation |
+| `./dev.sh provider-build` | Build the example custom provider |
+| `./dev.sh test-disabled` | Ordinary OIDC with OIDC4AC disabled |
+| `./dev.sh lint` | Python, shell, configuration, and provider formatting |
+| `./dev.sh status` | Source checkout and local service status |
 
-**Command:**
+See [Testing and reproducibility](docs/testing.md) for expected results,
+resources, dependencies, and coverage limits. The main build skips upstream
+Keycloak unit tests; these commands exercise the lab's integration and quality
+checks.
 
-```bash
-./dev.sh test-http
-```
+## Research and recognition
 
-**Expected resources:** 4 CPU cores, 8 GB RAM, 15 GB free disk; approximately
-5–15 minutes after images and Maven dependencies are cached.
+This project accompanies **OIDC4AC: Extending OpenID Connect for Structured and
+Negotiable Authentication Contexts**. The evaluated version received all four
+SBSeg 2026 artifact seals: **Available (SeloD)**, **Functional (SeloF)**,
+**Sustainable (SeloS)**, and **Reproducible Experiments (SeloR)**.
 
-**Expected result:** the HTTP suite completes its authorization-code scenarios
-covering Discovery, password/OTP requirements, recursive `all_of`/`one_of`,
-constraints, ID Token/UserInfo projections, snapshots, refresh, disclosure
-policy, and generic requirement failures.
-
-See [Usage flows](docs/usage-flows.md) and
-[Protocol alignment](docs/protocol-alignment.md) for the expected protocol
-behavior.
-
-### Claim 2 — Browser factor planning and passkey support
-
-**Command:**
-
-```bash
-./dev.sh test-browser
-```
-
-**Expected resources:** 4 CPU cores, 8 GB RAM, 15 GB free disk; approximately
-5–15 minutes after the regular Keycloak build is cached.
-
-**Expected result:** the isolated browser profile starts Keycloak on port 8186
-and the test client on port 5003, then exercises configured factor planning,
-OTP, passkey/WebAuthn `pop` mapping, alternative-branch behavior, and explicit
-user cancellation.
-
-See [Browser factor planning](docs/browser-factor-planning.md).
-
-### Claim 3 — Custom authentication-method extensibility
-
-**Commands:**
-
-```bash
-./dev.sh provider-build
-./dev.sh test-http
-```
-
-**Expected resources:** the same environment as Claim 1; provider compilation
-normally takes under 5 minutes after Maven dependencies are cached.
-
-**Expected result:** the `oidc4ac-test-email` JAR is compiled against the
-pinned Keycloak SPI, loaded into the server, advertised through Discovery, and
-used by the email factor. The resulting `amr_details` contains only the
-safe `email_verification_method: code` property.
-
-See [Creating a custom authentication method with the SPI](docs/custom-authentication-spi.md).
-
-### Claim 4 — Feature isolation and ordinary OIDC behavior
-
-**Command:**
-
-```bash
-./dev.sh test-disabled
-```
-
-**Expected resources:** 4 CPU cores, 8 GB RAM, 10 GB free disk; approximately
-5–10 minutes on a cold Docker/Maven cache.
-
-**Expected result:** the feature-disabled profile does not advertise or process
-OIDC4AC requests while the ordinary Keycloak/OIDC paths remain available.
-
-### Claim 5 — Artifact integrity and code quality
-
-**Commands:**
-
-```bash
-./dev.sh lint
-./dev.sh status
-```
-
-**Expected resources:** 2 CPU cores, 4 GB RAM, and 5 GB free disk; normally
-under 5 minutes after dependencies are cached. Host lint dependencies must be
-installed with `python3 -m pip install -r requirements-dev.txt`.
-
-**Expected result:** Compose, Python, shell, realm JSON, provider XML, and
-provider formatting checks pass, and `status` reports the selected staged
-Keycloak source and local services.
-
-## LICENSE
+## License
 
 The laboratory code and documentation in this repository are distributed under
 the Apache License 2.0; see [LICENSE](LICENSE). The

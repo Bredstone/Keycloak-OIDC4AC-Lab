@@ -2,7 +2,7 @@
 
 The project has an optional public instance for quickly trying the OIDC4AC
 implementation. It is a convenience for interactive exploration; the local
-Docker workflow remains the reproducible reference for the artifact.
+Docker workflow remains the reproducible reference for the lab.
 
 ## Access points
 

@@ -66,7 +66,7 @@ resolve_keycloak_repo() {
         return 0
     fi
 
-    # The SBSeg artifact branch carries the reviewed implementation as a
+    # The lab carries the implementation as a
     # pinned submodule. Stage it into ignored runtime space so the Keycloak
     # build cannot modify the submodule's tracked files.
     checkout="$lab_dir/keycloak-oidc4ac"
