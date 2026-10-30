@@ -24,7 +24,7 @@ resolve_keycloak_repo "$LAB_DIR" || exit 1
 REPOSITORY_DIR="$KEYCLOAK_REPO"
 RUNTIME_DIR="$LAB_DIR/.runtime"
 BUILD_DIR="$LAB_DIR/.build"
-PREPARED_ARCHIVE="$BUILD_DIR/keycloak-26.7.0.tar.gz"
+PREPARED_ARCHIVE="$BUILD_DIR/keycloak.tar.gz"
 PROVIDER_JAR="$LAB_DIR/providers/oidc4ac-test-email/target/oidc4ac-test-email-1.0.0-SNAPSHOT.jar"
 HTTP_PORT="${OIDC4AC_LAB_HTTP_PORT:-8080}"
 

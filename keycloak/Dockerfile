@@ -2,7 +2,7 @@ FROM eclipse-temurin:21-jre-jammy@sha256:3097cbbebb7d490494a98aed2301f284b38f79e
 
 ENV KEYCLOAK_HOME=/opt/keycloak
 
-COPY .build/keycloak-26.7.0.tar.gz /tmp/keycloak.tar.gz
+COPY .build/keycloak.tar.gz /tmp/keycloak.tar.gz
 RUN mkdir -p "${KEYCLOAK_HOME}" \
     && tar -xzf /tmp/keycloak.tar.gz -C "${KEYCLOAK_HOME}" --strip-components=1 \
     && rm /tmp/keycloak.tar.gz \

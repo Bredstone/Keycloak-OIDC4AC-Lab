@@ -94,7 +94,7 @@ resolve_keycloak_repo() {
     fi
 
     local url=${OIDC4AC_LAB_KEYCLOAK_REPO_URL:-https://github.com/Bredstone/keycloak-OIDC4AC.git}
-    local ref=${OIDC4AC_LAB_KEYCLOAK_REF:-ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc}
+    local ref=${OIDC4AC_LAB_KEYCLOAK_REF:-d3a1c6574f3271c161656f326e2441a3a7b531d2}
 
     if [[ ! -e "$checkout" ]]; then
         echo "Downloading Keycloak implementation from $url ($ref)..." >&2

@@ -11,7 +11,7 @@ PROVIDER_DIR="$ROOT_DIR/providers/oidc4ac-test-email"
 KEYCLOAK_PID_FILE="$RUNTIME_DIR/keycloak.pid"
 KEYCLOAK_LOG="$RUNTIME_DIR/keycloak.log"
 KEYCLOAK_LOG_TAIL_PID=""
-KEYCLOAK_ARCHIVE="$BUILD_DIR/keycloak-26.7.0.tar.gz"
+KEYCLOAK_ARCHIVE="$BUILD_DIR/keycloak.tar.gz"
 ISSUER="${OIDC4AC_LAB_ISSUER:-http://keycloak.localhost:8080/realms/oidc4ac}"
 CLIENT_URL="${OIDC4AC_LAB_CLIENT_URL:-http://client.localhost:${OIDC4AC_LAB_CLIENT_PORT:-5000}}"
 SMTP4DEV_WEB_URL="${OIDC4AC_LAB_SMTP_WEB_URL:-http://localhost:${OIDC4AC_LAB_SMTP_WEB_PORT:-5080}}"
@@ -151,12 +151,12 @@ build_keycloak() {
         # host build may have left it pointing at an absolute host path.
         rm -rf js/themes-vendor/target js/node_modules js/node/node_modules
         rm -f js/node/pnpm
-        ./mvnw clean -pl quarkus/dist -am -Dmaven.test.skip=true
-        ./mvnw -pl quarkus/dist -am -Dmaven.test.skip=true package
+        ./mvnw -pl quarkus/dist -am -DskipTests clean package
     '
 
-    local archive="$KEYCLOAK_REPO/quarkus/dist/target/keycloak-26.7.0.tar.gz"
-    [[ -f "$archive" ]] || die "Keycloak distribution not found: $archive"
+    local archive
+    archive=$(find "$KEYCLOAK_REPO/quarkus/dist/target" -maxdepth 1 -name 'keycloak-*.tar.gz' -print -quit)
+    [[ -n "$archive" && -f "$archive" ]] || die "Keycloak distribution not found in $KEYCLOAK_REPO/quarkus/dist/target"
     cp "$archive" "$KEYCLOAK_ARCHIVE"
     clean_managed_keycloak_repo
     echo "Prepared $KEYCLOAK_ARCHIVE"
@@ -395,7 +395,7 @@ Lifecycle:
   clean            Stop services and remove generated .runtime/.build state
 
 Build and checks:
-  build            Build Keycloak in Docker and prepare .build/keycloak-26.7.0.tar.gz
+  build            Build Keycloak in Docker and prepare .build/keycloak.tar.gz
   provider-build   Compile the optional email provider in Docker into target/
   lint             Run Python, shell, XML, and provider Spotless checks
   verify           Start the lab and run discovery/readiness checks

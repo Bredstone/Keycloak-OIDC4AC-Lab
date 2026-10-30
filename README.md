@@ -52,7 +52,7 @@ continue with the installation instructions below.
 The modified server is maintained in
 [Bredstone/keycloak-OIDC4AC](https://github.com/Bredstone/keycloak-OIDC4AC/tree/oidc4ac-implementation).
 This lab pins its source to commit
-[ec3fd9d](https://github.com/Bredstone/keycloak-OIDC4AC/commit/ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc)
+[d3a1c65](https://github.com/Bredstone/keycloak-OIDC4AC/commit/d3a1c6574f3271c161656f326e2441a3a7b531d2)
 for repeatable builds.
 
 ## Documentation
@@ -68,7 +68,7 @@ The repository contains the laboratory and the pinned Keycloak source as the
 source of that pinned submodule:
 
 - `keycloak-oidc4ac/` — a Git submodule pinned to the Keycloak
-  implementation commit (`ec3fd9d`) on the
+  implementation commit (`d3a1c65`) on the
   `oidc4ac-implementation` branch.
 - `config/` — the disposable `oidc4ac` realm import.
 - `test-client/` — the Flask relying-party workbench.
@@ -153,7 +153,7 @@ The main dependencies are:
 | Dependency | Version or source |
 | --- | --- |
 | Keycloak implementation | `keycloak-oidc4ac` submodule at the pinned commit |
-| Keycloak distribution | 26.7.0 |
+| Keycloak distribution | 26.7.0 base, built with the development version label `999.0.0-SNAPSHOT` |
 | Maven builder | `maven:3.9-eclipse-temurin-21` pinned by digest in `dev.sh` and `scripts/lint.sh` |
 | Python test/client images | `python:3.13.3-slim-bookworm` pinned by digest in their Dockerfiles |
 | Email sink | `rnwood/smtp4dev:v3` pinned by digest in both Compose files |
@@ -194,7 +194,7 @@ cd Keycloak-OIDC4AC-Lab
 
 The lab uses the pinned Keycloak submodule. If the submodule is
 missing or not initialized, the helper falls back to a managed checkout of the
-pinned commit `ec3fd9d3cedc7ad4b347256a0ab30116cb3b8fcc`. To use a different
+pinned commit `d3a1c6574f3271c161656f326e2441a3a7b531d2`. To use a different
 local checkout, set `OIDC4AC_LAB_KEYCLOAK_REPO` before starting the build.
 
 Start the complete laboratory:
