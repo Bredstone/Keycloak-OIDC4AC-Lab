@@ -267,10 +267,29 @@ checks.
 
 ## Research and recognition
 
-This project accompanies **OIDC4AC: Extending OpenID Connect for Structured and
-Negotiable Authentication Contexts**. The evaluated version received all four
+This project accompanies the published paper
+[**OIDC4AC: Extending OpenID Connect for Structured and Negotiable Authentication Contexts**](https://doi.org/10.5753/sbseg.2026.29370)
+(SBSeg 2026, DOI: `10.5753/sbseg.2026.29370`). The evaluated version received all four
 SBSeg 2026 artifact seals: **Available (SeloD)**, **Functional (SeloF)**,
 **Sustainable (SeloS)**, and **Reproducible Experiments (SeloR)**.
+
+<p align="center">
+  <a href="https://doc-artefatos.github.io/sbseg2026/results.html">
+    <img src="docs/images/sbseg-seal-available.png" width="120" alt="Available artifact — SeloD" title="Available artifact — SeloD">
+  </a>
+  <a href="https://doc-artefatos.github.io/sbseg2026/results.html">
+    <img src="docs/images/sbseg-seal-functional.png" width="120" alt="Functional artifact — SeloF" title="Functional artifact — SeloF">
+  </a>
+  <a href="https://doc-artefatos.github.io/sbseg2026/results.html">
+    <img src="docs/images/sbseg-seal-sustainable.png" width="120" alt="Sustainable artifact — SeloS" title="Sustainable artifact — SeloS">
+  </a>
+  <a href="https://doc-artefatos.github.io/sbseg2026/results.html">
+    <img src="docs/images/sbseg-seal-reproducible.png" width="120" alt="Reproducible experiments — SeloR" title="Reproducible experiments — SeloR">
+  </a>
+</p>
+
+See the [official evaluation results](https://doc-artefatos.github.io/sbseg2026/results.html).
+The seal artwork is reproduced as published on that page.
 
 ## License
 
