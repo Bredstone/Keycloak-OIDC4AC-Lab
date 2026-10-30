@@ -41,7 +41,7 @@ For fallback checkouts, the source helper fetches:
 
 ```text
 Repository: https://github.com/Bredstone/keycloak-OIDC4AC.git
-Ref:        d3a1c6574f3271c161656f326e2441a3a7b531d2
+Ref:        5bd7641d6813828d125932d6c2a2d1d6f91862a7
 Checkout:   .runtime/keycloak-source
 ```
 

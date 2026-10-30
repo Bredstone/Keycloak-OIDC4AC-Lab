@@ -52,7 +52,7 @@ continue with the installation instructions below.
 The modified server is maintained in
 [Bredstone/keycloak-OIDC4AC](https://github.com/Bredstone/keycloak-OIDC4AC/tree/oidc4ac-implementation).
 This lab pins its source to commit
-[d3a1c65](https://github.com/Bredstone/keycloak-OIDC4AC/commit/d3a1c6574f3271c161656f326e2441a3a7b531d2)
+[5bd7641](https://github.com/Bredstone/keycloak-OIDC4AC/commit/5bd7641d6813828d125932d6c2a2d1d6f91862a7)
 for repeatable builds.
 
 ## Documentation
@@ -68,7 +68,7 @@ The repository contains the laboratory and the pinned Keycloak source as the
 source of that pinned submodule:
 
 - `keycloak-oidc4ac/` — a Git submodule pinned to the Keycloak
-  implementation commit (`d3a1c65`) on the
+  implementation commit (`5bd7641`) on the
   `oidc4ac-implementation` branch.
 - `config/` — the disposable `oidc4ac` realm import.
 - `test-client/` — the Flask relying-party workbench.
@@ -194,7 +194,7 @@ cd Keycloak-OIDC4AC-Lab
 
 The lab uses the pinned Keycloak submodule. If the submodule is
 missing or not initialized, the helper falls back to a managed checkout of the
-pinned commit `d3a1c6574f3271c161656f326e2441a3a7b531d2`. To use a different
+pinned commit `5bd7641d6813828d125932d6c2a2d1d6f91862a7`. To use a different
 local checkout, set `OIDC4AC_LAB_KEYCLOAK_REPO` before starting the build.
 
 Start the complete laboratory:
