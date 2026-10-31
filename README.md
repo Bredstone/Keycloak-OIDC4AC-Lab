@@ -265,6 +265,10 @@ resources, dependencies, and coverage limits. The main build skips upstream
 Keycloak unit tests; these commands exercise the lab's integration and quality
 checks.
 
+The [evaluation](evaluation/README.md) directory holds the scripts and raw
+results of the compatibility matrix, message-size measurements, and
+processing-time benchmark reported in the accompanying dissertation.
+
 ## Research and recognition
 
 This project accompanies the published paper

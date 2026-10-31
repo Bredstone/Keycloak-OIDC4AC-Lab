@@ -1,0 +1,5 @@
+PASS legacy RP / legacy OP: ordinary success, no extension claim
+PASS legacy RP / OIDC4AC OP: ordinary success, no extension claim
+PASS OIDC4AC RP / legacy OP: Discovery-guided fallback; direct request remains ordinary
+PASS OIDC4AC RP / OIDC4AC OP: structured request processed and projected
+PASS OIDC4AC RP / informational-only OP: request ignored, actual executions reported

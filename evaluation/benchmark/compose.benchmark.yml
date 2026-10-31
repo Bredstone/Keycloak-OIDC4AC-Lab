@@ -1,0 +1,100 @@
+# Override for the laboratory's docker-compose.yml, used by run-benchmark.sh.
+# Each Keycloak instance runs on its own pinned CPUs with the same memory limit
+# and exposes HTTP server metrics on a separate management port.
+
+services:
+  keycloak:
+    command:
+      - start-dev
+      - --features=oidc4ac:v1,admin-fine-grained-authz:v2
+      - --import-realm
+      - --http-host=127.0.0.1
+      - --http-port=8186
+      - --hostname=http://localhost:8186
+      - --hostname-strict=false
+      - --metrics-enabled=true
+      - --http-management-port=9186
+    volumes:
+      - ${BENCH_FIXTURES}/realm-disabled-realm.json:/opt/keycloak/data/import/oidc4ac-off-realm.json:ro
+    cpuset: ${KC_ENABLED_CPUS}
+    mem_limit: 2g
+
+  keycloak-disabled:
+    command:
+      - start-dev
+      - --import-realm
+      - --http-host=127.0.0.1
+      - --http-port=8187
+      - --hostname=http://localhost:8187
+      - --hostname-strict=false
+      - --metrics-enabled=true
+      - --http-management-port=9187
+    volumes:
+      - ${BENCH_FIXTURES}/plain-realm.json:/opt/keycloak/data/import/oidc4ac-realm.json:ro
+    cpuset: ${KC_DISABLED_CPUS}
+    mem_limit: 2g
+
+  keycloak-official:
+    profiles: ["benchmark"]
+    image: oidc4ac-benchmark-keycloak-official:26.7.0
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    command:
+      - start-dev
+      - --import-realm
+      - --http-host=127.0.0.1
+      - --http-port=8188
+      - --hostname=http://localhost:8188
+      - --hostname-strict=false
+      - --metrics-enabled=true
+      - --http-management-port=9188
+    volumes:
+      - ${BENCH_FIXTURES}/plain-realm.json:/opt/keycloak/data/import/oidc4ac-realm.json:ro
+    cpuset: ${KC_OFFICIAL_CPUS}
+    mem_limit: 2g
+    network_mode: host
+
+  browser-test-client:
+    cpuset: ${CLIENT_CPUS}
+
+  client-realm-disabled:
+    profiles: ["benchmark"]
+    build:
+      context: ./test-client
+      dockerfile: Dockerfile
+    environment: &client-environment
+      OIDC_ISSUER: http://localhost:8186/realms/oidc4ac-off
+      OIDC_CLIENT_ID: oidc4ac-test-client
+      OIDC_CLIENT_SECRET: oidc4ac-lab-client-secret
+      FLASK_SECRET_KEY: local-development-only-change-me
+      PORT: "5005"
+    cpuset: ${CLIENT_CPUS}
+    network_mode: host
+
+  client-feature-disabled:
+    profiles: ["benchmark"]
+    build:
+      context: ./test-client
+      dockerfile: Dockerfile
+    environment:
+      <<: *client-environment
+      OIDC_ISSUER: http://localhost:8187/realms/oidc4ac
+      PORT: "5006"
+    cpuset: ${CLIENT_CPUS}
+    network_mode: host
+
+  client-official:
+    profiles: ["benchmark"]
+    build:
+      context: ./test-client
+      dockerfile: Dockerfile
+    environment:
+      <<: *client-environment
+      OIDC_ISSUER: http://localhost:8188/realms/oidc4ac
+      PORT: "5007"
+    cpuset: ${CLIENT_CPUS}
+    network_mode: host
+
+  e2e:
+    cpuset: ${CLIENT_CPUS}

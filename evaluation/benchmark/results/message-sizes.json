@@ -1,0 +1,295 @@
+{
+  "baseline": {
+    "request_claims": null,
+    "extension_request_query_bytes": 0,
+    "amr_details": [],
+    "amr_details_bytes": 0,
+    "id_token_payload_bytes": 511,
+    "id_token_encoded_bytes": 1137,
+    "userinfo_response_bytes": 186,
+    "execution_entry_bytes": {}
+  },
+  "single_method": {
+    "request_claims": {
+      "id_token": {
+        "amr_details": {
+          "essential": true,
+          "amr_identifier": {
+            "value": "pwd"
+          },
+          "amr_metadata": {
+            "time": {
+              "essential": true,
+              "max_age": 3600
+            },
+            "iss": null,
+            "location": null
+          },
+          "amr_properties": {
+            "pwd_derivation_algorithm": null,
+            "pwd_iterations": null,
+            "pwd_last_updated_at": null
+          }
+        }
+      },
+      "userinfo": {
+        "amr_details": {
+          "essential": true,
+          "amr_identifier": {
+            "value": "pwd"
+          },
+          "amr_metadata": {
+            "time": {
+              "essential": true,
+              "max_age": 3600
+            },
+            "iss": null,
+            "location": null
+          },
+          "amr_properties": {
+            "pwd_derivation_algorithm": null,
+            "pwd_iterations": null,
+            "pwd_last_updated_at": null
+          }
+        }
+      }
+    },
+    "extension_request_query_bytes": 810,
+    "amr_details": [
+      {
+        "amr_identifier": "pwd",
+        "amr_metadata": {
+          "time": "2026-10-30T18:41:36Z",
+          "iss": "http://localhost:8186/realms/oidc4ac",
+          "location": {
+            "ip_address": "127.0.0.1"
+          }
+        },
+        "amr_properties": {
+          "pwd_iterations": 5,
+          "pwd_derivation_algorithm": "argon2",
+          "pwd_last_updated_at": "2026-10-30T18:41:31.881Z"
+        }
+      }
+    ],
+    "amr_details_bytes": 279,
+    "id_token_payload_bytes": 819,
+    "id_token_encoded_bytes": 1547,
+    "userinfo_response_bytes": 494,
+    "execution_entry_bytes": {
+      "pwd": 277
+    }
+  },
+  "all_methods": {
+    "request_claims": {
+      "id_token": {
+        "amr_details": {
+          "essential": true,
+          "all_of": [
+            {
+              "amr_identifier": {
+                "value": "email"
+              },
+              "amr_metadata": {
+                "time": {
+                  "essential": true,
+                  "max_age": 3600
+                }
+              },
+              "amr_properties": {
+                "email_verification_method": null
+              }
+            },
+            {
+              "amr_identifier": {
+                "value": "otp"
+              },
+              "amr_metadata": {
+                "time": {
+                  "essential": true,
+                  "max_age": 3600
+                },
+                "iss": null,
+                "location": null
+              },
+              "amr_properties": {
+                "otp_algorithm": null,
+                "otp_delivery_method": null,
+                "otp_format": null,
+                "otp_length": null,
+                "otp_time_to_live": null
+              }
+            },
+            {
+              "amr_identifier": {
+                "value": "pop"
+              },
+              "amr_metadata": {
+                "time": {
+                  "essential": true,
+                  "max_age": 3600
+                },
+                "iss": null,
+                "location": null
+              }
+            },
+            {
+              "amr_identifier": {
+                "value": "pwd"
+              },
+              "amr_metadata": {
+                "time": {
+                  "essential": true,
+                  "max_age": 3600
+                },
+                "iss": null,
+                "location": null
+              },
+              "amr_properties": {
+                "pwd_derivation_algorithm": null,
+                "pwd_iterations": null,
+                "pwd_last_updated_at": null
+              }
+            }
+          ]
+        }
+      },
+      "userinfo": {
+        "amr_details": {
+          "essential": true,
+          "all_of": [
+            {
+              "amr_identifier": {
+                "value": "email"
+              },
+              "amr_metadata": {
+                "time": {
+                  "essential": true,
+                  "max_age": 3600
+                }
+              },
+              "amr_properties": {
+                "email_verification_method": null
+              }
+            },
+            {
+              "amr_identifier": {
+                "value": "otp"
+              },
+              "amr_metadata": {
+                "time": {
+                  "essential": true,
+                  "max_age": 3600
+                },
+                "iss": null,
+                "location": null
+              },
+              "amr_properties": {
+                "otp_algorithm": null,
+                "otp_delivery_method": null,
+                "otp_format": null,
+                "otp_length": null,
+                "otp_time_to_live": null
+              }
+            },
+            {
+              "amr_identifier": {
+                "value": "pop"
+              },
+              "amr_metadata": {
+                "time": {
+                  "essential": true,
+                  "max_age": 3600
+                },
+                "iss": null,
+                "location": null
+              }
+            },
+            {
+              "amr_identifier": {
+                "value": "pwd"
+              },
+              "amr_metadata": {
+                "time": {
+                  "essential": true,
+                  "max_age": 3600
+                },
+                "iss": null,
+                "location": null
+              },
+              "amr_properties": {
+                "pwd_derivation_algorithm": null,
+                "pwd_iterations": null,
+                "pwd_last_updated_at": null
+              }
+            }
+          ]
+        }
+      }
+    },
+    "extension_request_query_bytes": 2464,
+    "amr_details": [
+      {
+        "amr_identifier": "pwd",
+        "amr_metadata": {
+          "time": "2026-10-30T18:41:37Z",
+          "iss": "http://localhost:8186/realms/oidc4ac",
+          "location": {
+            "ip_address": "127.0.0.1"
+          }
+        },
+        "amr_properties": {
+          "pwd_iterations": 5,
+          "pwd_derivation_algorithm": "argon2",
+          "pwd_last_updated_at": "2026-10-30T18:41:31.881Z"
+        }
+      },
+      {
+        "amr_identifier": "otp",
+        "amr_metadata": {
+          "time": "2026-10-30T18:42:00Z",
+          "iss": "http://localhost:8186/realms/oidc4ac",
+          "location": {
+            "ip_address": "127.0.0.1"
+          }
+        },
+        "amr_properties": {
+          "otp_format": "numeric",
+          "otp_length": 6,
+          "otp_delivery_method": "app",
+          "otp_algorithm": "TOTP",
+          "otp_time_to_live": 30
+        }
+      },
+      {
+        "amr_metadata": {
+          "time": "2026-10-30T18:42:00Z",
+          "iss": "http://localhost:8186/realms/oidc4ac",
+          "location": {
+            "ip_address": "127.0.0.1"
+          }
+        },
+        "amr_identifier": "pop"
+      },
+      {
+        "amr_identifier": "email",
+        "amr_metadata": {
+          "time": "2026-10-30T18:42:05Z"
+        },
+        "amr_properties": {
+          "email_verification_method": "code"
+        }
+      }
+    ],
+    "amr_details_bytes": 847,
+    "id_token_payload_bytes": 1407,
+    "id_token_encoded_bytes": 2331,
+    "userinfo_response_bytes": 1082,
+    "execution_entry_bytes": {
+      "pwd": 277,
+      "otp": 284,
+      "pop": 154,
+      "email": 127
+    }
+  }
+}

@@ -1,0 +1,1006 @@
+{
+  "runs": 10,
+  "rounds_per_run": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100
+  ],
+  "sizes": {
+    "keycloak_official": {
+      "discovery_response_bytes": 6586,
+      "extension_request_query_bytes": 0,
+      "id_token_amr_details_bytes": 0,
+      "userinfo_amr_details_bytes": 0,
+      "id_token_payload_bytes": [
+        532,
+        532
+      ],
+      "userinfo_response_bytes": [
+        186,
+        186
+      ]
+    },
+    "fork_feature_disabled": {
+      "discovery_response_bytes": 6586,
+      "extension_request_query_bytes": 0,
+      "id_token_amr_details_bytes": 0,
+      "userinfo_amr_details_bytes": 0,
+      "id_token_payload_bytes": [
+        532,
+        532
+      ],
+      "userinfo_response_bytes": [
+        186,
+        186
+      ]
+    },
+    "fork_realm_disabled": {
+      "discovery_response_bytes": 6670,
+      "extension_request_query_bytes": 0,
+      "id_token_amr_details_bytes": 0,
+      "userinfo_amr_details_bytes": 0,
+      "id_token_payload_bytes": [
+        536,
+        536
+      ],
+      "userinfo_response_bytes": [
+        186,
+        186
+      ]
+    },
+    "oidc4ac_without_request": {
+      "discovery_response_bytes": 7385,
+      "extension_request_query_bytes": 0,
+      "id_token_amr_details_bytes": 0,
+      "userinfo_amr_details_bytes": 0,
+      "id_token_payload_bytes": [
+        532,
+        532
+      ],
+      "userinfo_response_bytes": [
+        186,
+        186
+      ]
+    },
+    "oidc4ac_with_request": {
+      "discovery_response_bytes": 7385,
+      "extension_request_query_bytes": 410,
+      "id_token_amr_details_bytes": 73,
+      "userinfo_amr_details_bytes": 73,
+      "id_token_payload_bytes": [
+        634,
+        634
+      ],
+      "userinfo_response_bytes": [
+        288,
+        288
+      ]
+    },
+    "oidc4ac_with_full_request": {
+      "discovery_response_bytes": 7385,
+      "extension_request_query_bytes": 2464,
+      "id_token_amr_details_bytes": 847,
+      "userinfo_amr_details_bytes": 847,
+      "id_token_payload_bytes": [
+        1428,
+        1428
+      ],
+      "userinfo_response_bytes": [
+        1082,
+        1082
+      ]
+    }
+  },
+  "sso": {
+    "conditions": {
+      "keycloak_official": {
+        "cycles": 4000,
+        "client_ms": {
+          "median": 15.995,
+          "p95": 22.89
+        },
+        "server_ms": {
+          "median": 7.048,
+          "p95": 12.745
+        }
+      },
+      "fork_feature_disabled": {
+        "cycles": 4000,
+        "client_ms": {
+          "median": 16.03,
+          "p95": 23.388
+        },
+        "server_ms": {
+          "median": 7.033,
+          "p95": 13.047
+        }
+      },
+      "fork_realm_disabled": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 16.009,
+          "p95": 23.116
+        },
+        "server_ms": {
+          "median": 7.037,
+          "p95": 12.587
+        }
+      },
+      "oidc4ac_without_request": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 15.968,
+          "p95": 23.241
+        },
+        "server_ms": {
+          "median": 7.041,
+          "p95": 12.843
+        }
+      },
+      "oidc4ac_with_request": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 16.766,
+          "p95": 23.511
+        },
+        "server_ms": {
+          "median": 7.39,
+          "p95": 13.023
+        }
+      },
+      "oidc4ac_with_full_request": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 18.885,
+          "p95": 26.748
+        },
+        "server_ms": {
+          "median": 8.247,
+          "p95": 15.017
+        }
+      }
+    },
+    "steps": [
+      {
+        "from": "keycloak_official",
+        "to": "fork_feature_disabled",
+        "client_ms": {
+          "mean_difference": 0.076,
+          "ci95": [
+            -0.214,
+            0.372
+          ],
+          "per_run": [
+            -0.052,
+            0.778,
+            -0.201,
+            0.219,
+            0.611,
+            0.262,
+            -0.162,
+            -0.281,
+            0.163,
+            -0.579
+          ],
+          "first_and_second_half": [
+            0.079,
+            0.073
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 0.025,
+          "ci95": [
+            -0.22,
+            0.271
+          ],
+          "per_run": [
+            -0.079,
+            0.53,
+            -0.067,
+            0.114,
+            0.497,
+            0.237,
+            -0.19,
+            -0.371,
+            0.165,
+            -0.589
+          ],
+          "first_and_second_half": [
+            0.019,
+            0.03
+          ]
+        }
+      },
+      {
+        "from": "fork_feature_disabled",
+        "to": "fork_realm_disabled",
+        "client_ms": {
+          "mean_difference": 0.134,
+          "ci95": [
+            -0.342,
+            0.722
+          ],
+          "per_run": [
+            -0.267,
+            -0.722,
+            0.722,
+            0.071,
+            -0.258,
+            -0.357,
+            1.947,
+            0.128,
+            -0.321,
+            0.393
+          ],
+          "first_and_second_half": [
+            0.122,
+            0.145
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 0.088,
+          "ci95": [
+            -0.287,
+            0.568
+          ],
+          "per_run": [
+            -0.355,
+            -0.488,
+            0.362,
+            0.056,
+            -0.307,
+            -0.326,
+            1.591,
+            0.188,
+            -0.211,
+            0.369
+          ],
+          "first_and_second_half": [
+            0.046,
+            0.129
+          ]
+        }
+      },
+      {
+        "from": "fork_realm_disabled",
+        "to": "oidc4ac_without_request",
+        "client_ms": {
+          "mean_difference": -0.071,
+          "ci95": [
+            -0.57,
+            0.367
+          ],
+          "per_run": [
+            0.33,
+            -0.158,
+            -0.619,
+            -0.054,
+            0.225,
+            0.163,
+            -1.291,
+            0.25,
+            0.081,
+            0.366
+          ],
+          "first_and_second_half": [
+            -0.295,
+            0.154
+          ]
+        },
+        "server_ms": {
+          "mean_difference": -0.1,
+          "ci95": [
+            -0.527,
+            0.271
+          ],
+          "per_run": [
+            0.379,
+            -0.291,
+            -0.334,
+            -0.119,
+            0.222,
+            0.025,
+            -1.312,
+            0.118,
+            0.061,
+            0.249
+          ],
+          "first_and_second_half": [
+            -0.238,
+            0.038
+          ]
+        }
+      },
+      {
+        "from": "oidc4ac_without_request",
+        "to": "oidc4ac_with_request",
+        "client_ms": {
+          "mean_difference": 0.656,
+          "ci95": [
+            0.263,
+            1.062
+          ],
+          "per_run": [
+            0.482,
+            0.909,
+            0.474,
+            0.276,
+            1.019,
+            0.277,
+            0.343,
+            0.495,
+            0.77,
+            1.512
+          ],
+          "first_and_second_half": [
+            0.784,
+            0.528
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 0.332,
+          "ci95": [
+            0.025,
+            0.67
+          ],
+          "per_run": [
+            0.192,
+            0.596,
+            0.183,
+            -0.029,
+            0.63,
+            0.112,
+            0.123,
+            0.2,
+            0.286,
+            1.026
+          ],
+          "first_and_second_half": [
+            0.46,
+            0.203
+          ]
+        }
+      },
+      {
+        "from": "oidc4ac_with_request",
+        "to": "oidc4ac_with_full_request",
+        "client_ms": {
+          "mean_difference": 2.224,
+          "ci95": [
+            1.668,
+            2.738
+          ],
+          "per_run": [
+            2.449,
+            2.607,
+            2.466,
+            2.361,
+            1.723,
+            2.406,
+            3.319,
+            2.463,
+            1.758,
+            0.684
+          ],
+          "first_and_second_half": [
+            2.429,
+            2.018
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 0.974,
+          "ci95": [
+            0.526,
+            1.376
+          ],
+          "per_run": [
+            1.137,
+            1.263,
+            1.189,
+            1.018,
+            0.542,
+            1.23,
+            1.803,
+            1.167,
+            0.66,
+            -0.269
+          ],
+          "first_and_second_half": [
+            1.109,
+            0.839
+          ]
+        }
+      }
+    ]
+  },
+  "refresh": {
+    "conditions": {
+      "keycloak_official": {
+        "cycles": 4000,
+        "client_ms": {
+          "median": 8.784,
+          "p95": 13.564
+        },
+        "server_ms": {
+          "median": 3.861,
+          "p95": 7.974
+        }
+      },
+      "fork_feature_disabled": {
+        "cycles": 4000,
+        "client_ms": {
+          "median": 8.761,
+          "p95": 13.986
+        },
+        "server_ms": {
+          "median": 3.842,
+          "p95": 8.29
+        }
+      },
+      "fork_realm_disabled": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 9.168,
+          "p95": 14.173
+        },
+        "server_ms": {
+          "median": 4.478,
+          "p95": 8.54
+        }
+      },
+      "oidc4ac_without_request": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 9.34,
+          "p95": 14.708
+        },
+        "server_ms": {
+          "median": 4.484,
+          "p95": 8.768
+        }
+      },
+      "oidc4ac_with_request": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 9.8,
+          "p95": 15.258
+        },
+        "server_ms": {
+          "median": 4.86,
+          "p95": 9.102
+        }
+      },
+      "oidc4ac_with_full_request": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 10.325,
+          "p95": 15.506
+        },
+        "server_ms": {
+          "median": 5.031,
+          "p95": 9.336
+        }
+      }
+    },
+    "steps": [
+      {
+        "from": "keycloak_official",
+        "to": "fork_feature_disabled",
+        "client_ms": {
+          "mean_difference": 0.072,
+          "ci95": [
+            -0.095,
+            0.244
+          ],
+          "per_run": [
+            -0.001,
+            0.337,
+            -0.028,
+            0.144,
+            0.422,
+            -0.249,
+            -0.082,
+            -0.204,
+            0.144,
+            0.239
+          ],
+          "first_and_second_half": [
+            0.103,
+            0.042
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 0.069,
+          "ci95": [
+            -0.063,
+            0.202
+          ],
+          "per_run": [
+            -0.025,
+            0.256,
+            0.032,
+            0.082,
+            0.365,
+            -0.166,
+            -0.08,
+            -0.115,
+            0.143,
+            0.198
+          ],
+          "first_and_second_half": [
+            0.078,
+            0.061
+          ]
+        }
+      },
+      {
+        "from": "fork_feature_disabled",
+        "to": "fork_realm_disabled",
+        "client_ms": {
+          "mean_difference": 0.453,
+          "ci95": [
+            0.204,
+            0.712
+          ],
+          "per_run": [
+            0.649,
+            0.461,
+            0.42,
+            0.545,
+            0.108,
+            0.484,
+            0.711,
+            0.204,
+            -0.016,
+            0.962
+          ],
+          "first_and_second_half": [
+            0.499,
+            0.406
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 0.508,
+          "ci95": [
+            0.301,
+            0.731
+          ],
+          "per_run": [
+            0.546,
+            0.437,
+            0.499,
+            0.614,
+            0.244,
+            0.457,
+            0.786,
+            0.318,
+            0.144,
+            1.032
+          ],
+          "first_and_second_half": [
+            0.552,
+            0.463
+          ]
+        }
+      },
+      {
+        "from": "fork_realm_disabled",
+        "to": "oidc4ac_without_request",
+        "client_ms": {
+          "mean_difference": 0.199,
+          "ci95": [
+            -0.161,
+            0.608
+          ],
+          "per_run": [
+            0.156,
+            -0.261,
+            -0.062,
+            0.258,
+            0.576,
+            0.04,
+            0.337,
+            1.358,
+            0.173,
+            -0.581
+          ],
+          "first_and_second_half": [
+            0.373,
+            0.026
+          ]
+        },
+        "server_ms": {
+          "mean_difference": -0.006,
+          "ci95": [
+            -0.284,
+            0.285
+          ],
+          "per_run": [
+            -0.039,
+            -0.21,
+            -0.252,
+            0.067,
+            0.355,
+            -0.108,
+            -0.036,
+            0.75,
+            0.056,
+            -0.647
+          ],
+          "first_and_second_half": [
+            0.101,
+            -0.114
+          ]
+        }
+      },
+      {
+        "from": "oidc4ac_without_request",
+        "to": "oidc4ac_with_request",
+        "client_ms": {
+          "mean_difference": 0.386,
+          "ci95": [
+            -0.021,
+            0.76
+          ],
+          "per_run": [
+            0.509,
+            0.303,
+            0.673,
+            0.179,
+            0.979,
+            0.568,
+            -0.133,
+            -0.759,
+            0.51,
+            1.03
+          ],
+          "first_and_second_half": [
+            0.289,
+            0.483
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 0.325,
+          "ci95": [
+            0.055,
+            0.58
+          ],
+          "per_run": [
+            0.595,
+            0.178,
+            0.469,
+            0.123,
+            0.559,
+            0.431,
+            0.059,
+            -0.319,
+            0.342,
+            0.811
+          ],
+          "first_and_second_half": [
+            0.308,
+            0.341
+          ]
+        }
+      },
+      {
+        "from": "oidc4ac_with_request",
+        "to": "oidc4ac_with_full_request",
+        "client_ms": {
+          "mean_difference": 0.469,
+          "ci95": [
+            0.121,
+            0.798
+          ],
+          "per_run": [
+            0.269,
+            0.851,
+            0.415,
+            0.608,
+            -0.364,
+            0.472,
+            0.961,
+            0.272,
+            1.038,
+            0.167
+          ],
+          "first_and_second_half": [
+            0.558,
+            0.381
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 0.281,
+          "ci95": [
+            0.017,
+            0.538
+          ],
+          "per_run": [
+            0.006,
+            0.543,
+            0.357,
+            0.409,
+            -0.3,
+            0.301,
+            0.642,
+            0.069,
+            0.733,
+            0.046
+          ],
+          "first_and_second_half": [
+            0.308,
+            0.253
+          ]
+        }
+      }
+    ]
+  },
+  "login": {
+    "conditions": {
+      "keycloak_official": {
+        "cycles": 3000,
+        "client_ms": {
+          "median": 75.892,
+          "p95": 140.158
+        },
+        "server_ms": {
+          "median": 63.785,
+          "p95": 124.543
+        }
+      },
+      "fork_feature_disabled": {
+        "cycles": 3000,
+        "client_ms": {
+          "median": 74.908,
+          "p95": 138.157
+        },
+        "server_ms": {
+          "median": 62.832,
+          "p95": 123.211
+        }
+      },
+      "fork_realm_disabled": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 78.664,
+          "p95": 145.734
+        },
+        "server_ms": {
+          "median": 66.375,
+          "p95": 131.897
+        }
+      },
+      "oidc4ac_without_request": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 81.668,
+          "p95": 150.67
+        },
+        "server_ms": {
+          "median": 69.072,
+          "p95": 136.415
+        }
+      },
+      "oidc4ac_with_request": {
+        "cycles": 1000,
+        "client_ms": {
+          "median": 82.442,
+          "p95": 149.037
+        },
+        "server_ms": {
+          "median": 69.451,
+          "p95": 132.9
+        }
+      }
+    },
+    "steps": [
+      {
+        "from": "keycloak_official",
+        "to": "fork_feature_disabled",
+        "client_ms": {
+          "mean_difference": -0.528,
+          "ci95": [
+            -10.128,
+            9.971
+          ],
+          "per_run": [
+            29.883,
+            -25.897,
+            -0.233,
+            22.403,
+            0.224,
+            -5.002,
+            -10.421,
+            5.788,
+            -19.079,
+            -2.943
+          ],
+          "first_and_second_half": [
+            -0.251,
+            -0.805
+          ]
+        },
+        "server_ms": {
+          "mean_difference": -0.539,
+          "ci95": [
+            -10.306,
+            9.998
+          ],
+          "per_run": [
+            29.821,
+            -26.14,
+            0.263,
+            22.391,
+            -0.102,
+            -4.668,
+            -10.227,
+            5.389,
+            -19.004,
+            -3.113
+          ],
+          "first_and_second_half": [
+            -0.302,
+            -0.776
+          ]
+        }
+      },
+      {
+        "from": "fork_feature_disabled",
+        "to": "fork_realm_disabled",
+        "client_ms": {
+          "mean_difference": 5.748,
+          "ci95": [
+            -4.312,
+            14.859
+          ],
+          "per_run": [
+            0.863,
+            22.477,
+            -9.679,
+            -26.409,
+            0.748,
+            19.915,
+            7.906,
+            0.079,
+            19.672,
+            21.904
+          ],
+          "first_and_second_half": [
+            4.164,
+            7.331
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 5.95,
+          "ci95": [
+            -3.98,
+            14.958
+          ],
+          "per_run": [
+            0.703,
+            23.161,
+            -9.059,
+            -25.986,
+            1.216,
+            20.133,
+            7.635,
+            0.375,
+            19.685,
+            21.641
+          ],
+          "first_and_second_half": [
+            4.382,
+            7.519
+          ]
+        }
+      },
+      {
+        "from": "fork_realm_disabled",
+        "to": "oidc4ac_without_request",
+        "client_ms": {
+          "mean_difference": 2.516,
+          "ci95": [
+            -0.058,
+            5.053
+          ],
+          "per_run": [
+            3.486,
+            4.317,
+            7.64,
+            1.449,
+            4.472,
+            -0.813,
+            1.476,
+            2.31,
+            -1.018,
+            1.844
+          ],
+          "first_and_second_half": [
+            4.264,
+            0.768
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 2.268,
+          "ci95": [
+            -0.152,
+            4.652
+          ],
+          "per_run": [
+            3.469,
+            3.779,
+            7.113,
+            1.208,
+            4.045,
+            -0.927,
+            1.242,
+            2.039,
+            -0.927,
+            1.638
+          ],
+          "first_and_second_half": [
+            4.02,
+            0.516
+          ]
+        }
+      },
+      {
+        "from": "oidc4ac_without_request",
+        "to": "oidc4ac_with_request",
+        "client_ms": {
+          "mean_difference": 0.984,
+          "ci95": [
+            -1.677,
+            3.714
+          ],
+          "per_run": [
+            -2.082,
+            -3.312,
+            0.132,
+            1.279,
+            -0.935,
+            4.927,
+            5.824,
+            0.629,
+            3.34,
+            0.041
+          ],
+          "first_and_second_half": [
+            0.954,
+            1.014
+          ]
+        },
+        "server_ms": {
+          "mean_difference": 0.592,
+          "ci95": [
+            -1.981,
+            3.345
+          ],
+          "per_run": [
+            -2.478,
+            -3.598,
+            -0.562,
+            0.621,
+            -1.421,
+            4.611,
+            5.404,
+            0.191,
+            3.104,
+            0.049
+          ],
+          "first_and_second_half": [
+            0.548,
+            0.636
+          ]
+        }
+      }
+    ]
+  }
+}
